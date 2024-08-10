@@ -1,3 +1,4 @@
-../python-task-1/.venv
-.idea
+*.venv
+*.idea
 .vscode
+*.env
