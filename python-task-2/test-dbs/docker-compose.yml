@@ -18,10 +18,12 @@ services:
 
   postgres:
     image: postgres:latest
-    container_name: ${PROJECT_NAME}-postges
+    container_name: ${PROJECT_NAME}-postgres
     restart: unless-stopped
+    user: postgres
     volumes:
       - postgres:/var/lib/postgresql/data
+      - ./test-dumps/northwind-db(postgres):/home
     ports:
       - 5432:5432
     environment:
