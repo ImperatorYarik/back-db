@@ -78,4 +78,4 @@ if args.type == 'structure':
         is_structure=True,
         database_name=args.db)
     os.makedirs(f'backups/{args.db}', exist_ok=True)
-    backup.backup_structure()
+    backup.backup()

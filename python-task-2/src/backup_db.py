@@ -21,12 +21,27 @@ class BackupDatabase(Database):
         else:
             self.filepath = filepath
 
+    def backup(self):
+        current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        save_path = f'{self.filepath}/{current_time}'
+        os.makedirs(save_path, exist_ok=True)
+
+        if self.is_structure:
+            backup = self.backup_structure()
+            with open(f'{save_path}/structure.sql', 'w') as f:
+                f.write(backup)
+        if self.is_data:
+            backup = self.backup_data()
+            with open(f'{save_path}/data.sql', 'w') as f:
+                f.write(backup)
+        if self.is_full:
+            backup = f'{self.backup_structure()}\n\n{self.backup_data()}'
+            with open(f'{save_path}/full.sql', 'w') as f:
+                f.write(backup)
+
     def backup_structure(self):
         if self.is_structure:
             schema = super().get_database_schema()
-            current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-            save_path = f'{self.filepath}/{current_time}'
-            os.makedirs(save_path, exist_ok=True)
             result = f'CREATE SCHEMA {self.database_name};\nUSE {self.database_name};\n\n'
             column_definitions = []
             result += ''
@@ -43,5 +58,7 @@ class BackupDatabase(Database):
 
                 column_str = ', '.join(column_definitions)
                 result += f'CREATE TABLE {table_name} ({column_str});\n'
-            with open(f'{save_path}/{current_time}-structure' + '.sql', 'w') as file:
-                file.write(result)
+            return result
+
+    def backup_data(self):
+        return ''
