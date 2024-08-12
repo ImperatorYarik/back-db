@@ -1,11 +1,16 @@
-import sys
+import os
 import logging
 import argparse
 
+from src.db import Database
+from src.backup_db import BackupDatabase
 parser = argparse.ArgumentParser(description='Database Backup and Restore utility')
 subparsers = parser.add_subparsers(dest='command', help='commands')
 
 backup_parser = subparsers.add_parser('backup', help='Backup database')
+
+os.makedirs('backups', exist_ok=True)
+
 
 backup_parser.add_argument(
     '--db',
@@ -37,7 +42,6 @@ backup_parser.add_argument(
 backup_parser.add_argument(
     "--save-into",
     help="Specify in which folder save backup.",
-    required=True
 )
 
 restore_parser = subparsers.add_parser('restore', help='Restore database')
@@ -64,3 +68,7 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
+if args.type == 'structure':
+    backup = BackupDatabase(database_url='mysql+mysqlconnector://root:root@localhost:3306/sakila',is_structure=True)
+    backup.backup_structure()
