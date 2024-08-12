@@ -5,17 +5,21 @@ from src.db import Database
 
 
 class BackupDatabase(Database):
-    def __init__(self, database_url: str, is_structure: bool = False, is_data: bool = False, is_full: bool = False,
+    def __init__(self, database_url: str, database_name: str, is_structure: bool = False, is_data: bool = False,
+                 is_full: bool = False,
                  is_tables: bool = False,
                  tables: list = None,
-                 filepath: str = './backups',):
-        super().__init__(database_url=database_url)
+                 filepath: str = None):
+        super().__init__(database_url=database_url, database_name=database_name)
         self.is_structure = is_structure
         self.is_data = is_data
         self.is_full = is_full
         self.is_tables = is_tables
         self.tables = tables
-        self.filepath = filepath
+        if filepath is None:
+            self.filepath = f'backups/{self.database_name}'
+        else:
+            self.filepath = filepath
 
     def backup_structure(self):
         if self.is_structure:
@@ -23,7 +27,7 @@ class BackupDatabase(Database):
             current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
             save_path = f'{self.filepath}/{current_time}'
             os.makedirs(save_path, exist_ok=True)
-            result = 'CREATE SCHEMA sakila;\nUSE sakila;\n\n'
+            result = f'CREATE SCHEMA {self.database_name};\nUSE {self.database_name};\n\n'
             column_definitions = []
             result += ''
             for table_name, columns in schema.items():
@@ -41,4 +45,3 @@ class BackupDatabase(Database):
                 result += f'CREATE TABLE {table_name} ({column_str});\n'
             with open(f'{save_path}/{current_time}-structure' + '.sql', 'w') as file:
                 file.write(result)
-

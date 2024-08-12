@@ -2,15 +2,18 @@ import os
 import logging
 import argparse
 
+from dotenv import load_dotenv
+
 from src.db import Database
 from src.backup_db import BackupDatabase
+
+load_dotenv()
+
 parser = argparse.ArgumentParser(description='Database Backup and Restore utility')
 subparsers = parser.add_subparsers(dest='command', help='commands')
-
 backup_parser = subparsers.add_parser('backup', help='Backup database')
 
 os.makedirs('backups', exist_ok=True)
-
 
 backup_parser.add_argument(
     '--db',
@@ -70,5 +73,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.type == 'structure':
-    backup = BackupDatabase(database_url='mysql+mysqlconnector://root:root@localhost:3306/sakila',is_structure=True)
+    backup = BackupDatabase(
+        database_url=f'mysql+mysqlconnector://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{args.db}',
+        is_structure=True,
+        database_name=args.db)
+    os.makedirs(f'backups/{args.db}', exist_ok=True)
     backup.backup_structure()

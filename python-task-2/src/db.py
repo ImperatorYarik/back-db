@@ -2,7 +2,8 @@ import sqlalchemy as sa
 
 
 class Database():
-    def __init__(self, database_url: str):
+    def __init__(self, database_url: str, database_name: str):
+        self.database_name = database_name
         self.engine = sa.create_engine(database_url)
         self.metadata = sa.MetaData()
         self.metadata.reflect(bind=self.engine)
