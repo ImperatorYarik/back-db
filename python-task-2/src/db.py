@@ -1,4 +1,6 @@
 import sqlalchemy as sa
+from sqlalchemy import text
+from sqlalchemy.engine import row
 
 
 class Database():
@@ -26,3 +28,18 @@ class Database():
             schema[table_name] = columns
 
         return schema
+
+    def get_all_data(self):
+        data = {}
+        with self.engine.connect() as connection:
+            for table_name in self.metadata.tables:
+                query = text(f'SELECT * FROM {table_name}')
+                result_set = connection.execute(query)
+                rows = result_set.fetchall()
+
+                columns = result_set.keys()
+                table_data = [dict(zip(columns, row)) for row in rows]
+                data[table_name] = table_data
+
+            return data
+        pass
