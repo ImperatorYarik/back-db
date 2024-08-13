@@ -33,7 +33,7 @@ class Database():
         data = {}
         with self.engine.connect() as connection:
             for table_name in self.metadata.tables:
-                query = text(f'SELECT * FROM {table_name}')
+                query = text(f'SELECT * FROM {self.database_name}.{table_name}')
                 result_set = connection.execute(query)
                 rows = result_set.fetchall()
 

@@ -4,6 +4,7 @@ from datetime import datetime
 from src.db import Database
 from sqlalchemy import text
 
+
 class BackupDatabase(Database):
     def __init__(self, database_url: str, database_name: str, is_structure: bool = False, is_data: bool = False,
                  is_full: bool = False,
@@ -42,9 +43,9 @@ class BackupDatabase(Database):
     def backup_structure(self):
         schema = super().get_database_schema()
         result = f'CREATE SCHEMA {self.database_name};\nUSE {self.database_name};\n\n'
-        column_definitions = []
         result += ''
         for table_name, columns in schema.items():
+            column_definitions = []
             for column in columns:
                 column_definition = f'{column["name"]} {column["type"]}'
                 if not column["nullable"]:
@@ -59,15 +60,26 @@ class BackupDatabase(Database):
             result += f'CREATE TABLE {table_name} ({column_str});\n'
         return result
 
+    def format_value(self, value):
+        if isinstance(value, str):
+            return f"'{value}'"
+        elif value is None:
+            return "NULL"
+        elif isinstance(value, (set, list)):
+            return f"'{', '.join(value)}'"
+        elif isinstance(value, datetime):
+            return f"'{value.strftime('%Y-%m-%d %H:%M:%S')}'"
+        else:
+            return str(value)
+
+    # FIXME: Bad sql format,
     def backup_data(self):
         data = self.get_all_data()
         result = f'USE {self.database_name};\n\n'
-        values_str = ''
         for table_name, rows in data.items():
             for row in rows:
-                values_str += ', '.join(f'{v}' for v in row.values())
-                values_str += '),\n '
-
-
-            result += f'INSERT INTO {table_name} VALUES ({values_str});\n'
+                formatted_values = [self.format_value(value) for value in row]
+                values_str = ', '.join(formatted_values)
+                result += f'INSERT INTO {table_name} VALUES ({values_str});\n'
+        result += "COMMIT;"
         return result
