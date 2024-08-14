@@ -4,8 +4,6 @@ import argparse
 
 from dotenv import load_dotenv
 
-from src.db import Database
-from src.backup_db import BackupDatabase
 
 load_dotenv()
 
@@ -73,24 +71,3 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-if args.type == 'structure':
-    backup = BackupDatabase(
-        database_url=f'mysql+mysqlconnector://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{args.db}',
-        is_structure=True,
-        database_name=args.db)
-    os.makedirs(f'backups/{args.db}', exist_ok=True)
-    backup.backup()
-elif args.type == 'data':
-    backup = BackupDatabase(
-        database_url=f'mysql+mysqlconnector://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{args.db}',
-        is_data=True,
-        database_name=args.db)
-    os.makedirs(f'backups/{args.db}', exist_ok=True)
-    backup.backup()
-else:
-    backup = BackupDatabase(
-        database_url=f'mysql+mysqlconnector://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{args.db}',
-        is_full=True,
-        database_name=args.db)
-    os.makedirs(f'backups/{args.db}', exist_ok=True)
-    backup.backup()
