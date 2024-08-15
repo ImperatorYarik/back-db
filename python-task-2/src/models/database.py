@@ -8,7 +8,7 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def get_database_structure(self) -> dict:
+    def get_database_structure(self) -> str:
         """Get database structure"""
         pass
 
