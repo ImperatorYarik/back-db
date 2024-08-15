@@ -1,4 +1,3 @@
-from venv import create
 
 import mysql.connector
 
@@ -22,7 +21,6 @@ class MySQL(Database):
 
     def get_database_structure(self) -> str:
         cursor = self.connection.cursor()
-        table = []
         cursor.execute('SHOW TABLES')
         tables = [row[0] for row in cursor.fetchall()]
 
@@ -35,7 +33,7 @@ class MySQL(Database):
             # print(structure)
         return structure
 
-    def get_database_data(self) -> dict:
+    def get_database_data(self) -> str:
         pass
 
     def get_table(self) -> dict:

@@ -13,12 +13,12 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def get_database_data(self) -> dict:
+    def get_database_data(self) -> str:
         """Get database data"""
         pass
 
     @abstractmethod
-    def get_table(self) -> dict:
+    def get_table(self) -> str:
         """Get table structure with data"""
         pass
 
