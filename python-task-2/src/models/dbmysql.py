@@ -1,4 +1,3 @@
-
 import mysql.connector
 
 from src.models.database import Database
@@ -34,7 +33,33 @@ class MySQL(Database):
         return structure
 
     def get_database_data(self) -> str:
-        pass
+        cursor = self.connection.cursor()
+        result = f'USE {self.database_name};\n\n'
+
+        try:
+            cursor.execute(f"SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
+            tables = [row[0] for row in cursor.fetchall()]
+
+            for table in tables:
+                cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+                columns = [row[0] for row in cursor.fetchall()]
+                column_list = ', '.join([f'`{column}`' for column in columns])
+                cursor.execute(f"SELECT * FROM `{table}`")
+                rows = cursor.fetchall()
+
+                for row in rows:
+                    values = ', '.join(f"'{mysql.connector.escape_string(str(val))}'" if val is
+                                                                                         not None else 'NULL'
+                                       for val in row)
+                    result += f"INSERT INTO `{table}` ({column_list}) VALUES ({values});\n"
+
+                result += '\n'
+
+
+        except mysql.connector.Error as err:
+            raise Exception(err)
+
+        return result
 
     def get_table(self) -> dict:
         pass
