@@ -31,7 +31,7 @@ class MySQL(Database):
             structure += create_table[0][1] + '\n\n'
             # print(structure)
         return structure
-
+# FIXME: doesent return insert values
     def get_database_data(self) -> str:
         cursor = self.connection.cursor()
         result = f'USE {self.database_name};\n\n'
@@ -48,9 +48,7 @@ class MySQL(Database):
                 rows = cursor.fetchall()
 
                 for row in rows:
-                    values = ', '.join(f"'{mysql.connector.escape_string(str(val))}'" if val is
-                                                                                         not None else 'NULL'
-                                       for val in row)
+                    values = ', '.join(['%s' for _ in row])
                     result += f"INSERT INTO `{table}` ({column_list}) VALUES ({values});\n"
 
                 result += '\n'
