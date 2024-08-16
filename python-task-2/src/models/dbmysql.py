@@ -1,3 +1,7 @@
+import datetime
+from collections.abc import ByteString
+from statistics import geometric_mean
+
 import mysql.connector
 
 from src.models.database import Database
@@ -28,30 +32,46 @@ class MySQL(Database):
             cursor.execute(f'SHOW CREATE TABLE {table}')
             create_table = cursor.fetchall()
 
-            structure += create_table[0][1] + '\n\n'
+            structure += create_table[0][1] + ';\n\n'
             # print(structure)
         return structure
 # FIXME: doesent return insert values
+# FIXME: bad hex location format
     def get_database_data(self) -> str:
         cursor = self.connection.cursor()
-        result = f'USE {self.database_name};\n\n'
+        result = """SET NAMES utf8mb4;
+        SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+        SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+        SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+        SET @old_autocommit=@@autocommit;\n\n\n"""
+        result += f'USE {self.database_name};\n\n'
 
         try:
             cursor.execute(f"SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
             tables = [row[0] for row in cursor.fetchall()]
 
             for table in tables:
+
+                result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` VALUES "
                 cursor.execute(f"SHOW COLUMNS FROM `{table}`")
                 columns = [row[0] for row in cursor.fetchall()]
                 column_list = ', '.join([f'`{column}`' for column in columns])
-                cursor.execute(f"SELECT * FROM `{table}`")
+                cursor.execute(f"SELECT * FROM {table}")
                 rows = cursor.fetchall()
-
                 for row in rows:
-                    values = ', '.join(['%s' for _ in row])
-                    result += f"INSERT INTO `{table}` ({column_list}) VALUES ({values});\n"
+                    formatted_row = []
+                    for value in row:
+                        #print(type(value))
+                        if value is None:
+                            formatted_row.append('NULL')
+                        elif isinstance(value, datetime.datetime):
+                            formatted_row.append(f"{value.strftime('%Y-%m-%d %H:%M:%S')}")
+                        else:
+                            formatted_row.append(value)
+                    result += f'{formatted_row},\n'.replace('[','(').replace(']',')').replace("'NULL'", 'NULL').replace(' ','')
 
-                result += '\n'
+                if result.endswith(',\n'):
+                    result = result[:-2] + ';\nCOMMIT;\n'
 
 
         except mysql.connector.Error as err:
