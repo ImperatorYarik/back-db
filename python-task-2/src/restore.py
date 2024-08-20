@@ -33,7 +33,11 @@ class Restore:
                     all_versions = []
                     filenames = os.listdir(self.file)
                     for filename in filenames:
-                        all_versions.append(filename.split('-')[0])
+                        temp = filename.split('-')
+                        print(temp)
+                        if temp[1] == f'{self.restore_type}.sql':
+                            all_versions.append(temp[0])
+
                     self.backup_version = max(all_versions)
                 with open(f'{self.file}/{self.backup_version}-structure.sql', 'r') as file:
                     structure = file.read()

@@ -35,7 +35,14 @@ class MySQL(Database):
         cursor.execute(sql_query)
         tables = [row[0] for row in cursor.fetchall()]
 
-        structure = f'CREATE SCHEMA {self.database_name};\nUSE {self.database_name}\n\n'
+        structure = f"""SET NAMES utf8mb4;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+
+DROP SCHEMA IF EXISTS {self.database_name};
+CREATE SCHEMA {self.database_name};
+USE {self.database_name};"""
         for table in tables:
             cursor.execute(f'SHOW CREATE TABLE {table}')
             create_table = cursor.fetchall()
@@ -94,20 +101,15 @@ class MySQL(Database):
 
     def restore_database_structure(self, database_structure:str) -> bool:
         cursor = self.connection.cursor()
-        structure = database_structure.split('\n')
-        execute_later = []
+        structure = database_structure.split(';')
+        print(structure[2])
         for element in structure:
             try:
                 cursor.execute(element)
-            except:
-                execute_later.append(element)
-        while execute_later:
-            for element in execute_later:
-                try:
-                    cursor.execute(element)
-                    execute_later.remove(element)
-                except:
-                    continue
+            except Exception as e:
+                print(e)
+
+
         return True
 
     def restore_database_data(self, database_data) -> bool:

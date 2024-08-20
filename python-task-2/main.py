@@ -3,6 +3,7 @@ import argparse
 from email.policy import default
 
 import src.backup as backup
+import src.restore as restore
 
 
 def backup_controller(args):
@@ -11,6 +12,13 @@ def backup_controller(args):
                        is_save_multiple=args.save_multi, save_into=args.save_into)
 
     return bk.backup_database()
+
+
+def restore_controller(args):
+    rs = restore.Restore(db_type=args.db_type, database_name=args.db, connection_string=args.connection_string,
+                         file=args.file, backup_version=args.backup_version, restore_type=args.type,
+                         table_name=args.table)
+    return rs.restore_database()
 
 
 def main():
@@ -109,6 +117,8 @@ def main():
 
     if args.command == 'backup':
         print(backup_controller(args))
+    if args.command == 'restore':
+        print(restore_controller(args))
 
 
 if __name__ == '__main__':
