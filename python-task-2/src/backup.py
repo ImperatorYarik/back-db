@@ -21,16 +21,15 @@ class Backup:
         self.save_into = save_into
         if self.save_into is not None:
             if os.path.isdir(save_into):
-                os.makedirs(save_into, exist_ok=True)
+                os.makedirs(f"{save_into}-{db_type}", exist_ok=True)
             else:
                 logger.error('Provided path is not dir or does\'t exist!')
         else:
-            self.save_into = f'backup/{database_name}'
+            self.save_into = f'backup/{database_name}-mysql'
             os.makedirs(self.save_into, exist_ok=True)
 
     def backup_database(self) -> str:
-        """Delegates backup tasks to another methods"""
-        print(self.op_type)
+        """Backups and writes to file backups with type match"""
         match self.op_type:
             case 'structure':
                 now = datetime.now()

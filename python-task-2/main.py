@@ -64,13 +64,33 @@ def main():
 
     restore_parser = subparsers.add_parser('restore', help='Restore database')
     restore_parser.add_argument(
+        '--db',
+        required=True,
+        help='Database name',
+        action='store'
+    )
+    restore_parser.add_argument(
+        '--connection-string',
+        required=True,
+        action='store'
+    )
+    restore_parser.add_argument(
+        '--db-type',
+        required=True,
+        action='store'
+    )
+    restore_parser.add_argument(
         '--file',
         help='File to restore.',
-        required=True
+    )
+    restore_parser.add_argument(
+        '--backup-version',
+        help='Database backup version(timestamp)',
+        action='store'
     )
     restore_parser.add_argument(
         '--type',
-        choices=['structure', 'data', 'full'],
+        choices=['structure', 'data'],
         help='Type of database restoration.',
         action='store'
     )

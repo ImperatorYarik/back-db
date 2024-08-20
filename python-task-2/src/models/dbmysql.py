@@ -92,8 +92,23 @@ class MySQL(Database):
     def get_table(self) -> dict:
         pass
 
-    def restore_database_structure(self, database_data) -> bool:
-        pass
+    def restore_database_structure(self, database_structure:str) -> bool:
+        cursor = self.connection.cursor()
+        structure = database_structure.split('\n')
+        execute_later = []
+        for element in structure:
+            try:
+                cursor.execute(element)
+            except:
+                execute_later.append(element)
+        while execute_later:
+            for element in execute_later:
+                try:
+                    cursor.execute(element)
+                    execute_later.remove(element)
+                except:
+                    continue
+        return True
 
     def restore_database_data(self, database_data) -> bool:
         pass
