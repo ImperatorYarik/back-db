@@ -17,11 +17,25 @@ class Restore:
         self.table_name = table_name
         self.connection_string = connection_string
         self.backup_version = backup_version
+        if self.backup_version is None:
+            all_versions = []
+            filenames = os.listdir(self.file)
+            for filename in filenames:
+                temp = filename.split('-')
+                print(temp)
+                if temp[1] == f'{self.restore_type}.sql':
+                    all_versions.append(temp[0])
+                    self.backup_version = max(all_versions)
 
     def restore_structure(self, database_structure):
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
             return db.restore_database_structure(database_structure=database_structure)
+
+    def restore_data(self, database_data):
+        if self.db_type == 'mysql':
+            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
+            return db.restore_database_data(database_data=database_data)
 
     def restore_database(self):
         """
@@ -29,16 +43,12 @@ class Restore:
         """
         match self.restore_type:
             case 'structure':
-                if self.backup_version is None:
-                    all_versions = []
-                    filenames = os.listdir(self.file)
-                    for filename in filenames:
-                        temp = filename.split('-')
-                        print(temp)
-                        if temp[1] == f'{self.restore_type}.sql':
-                            all_versions.append(temp[0])
-
-                    self.backup_version = max(all_versions)
                 with open(f'{self.file}/{self.backup_version}-structure.sql', 'r') as file:
                     structure = file.read()
                 return self.restore_structure(structure)
+
+            case 'data':
+                with open(f'{self.file}/{self.backup_version}-data.sql', 'r') as file:
+                    data = file.read()
+                #print(data)
+                return self.restore_data(data)

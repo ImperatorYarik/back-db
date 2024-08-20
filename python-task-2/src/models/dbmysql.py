@@ -50,17 +50,17 @@ USE {self.database_name};"""
 
         return structure
 
-
+# FIXME: bad return format, need to change list to string, with correct sql format
     def get_database_data(self) -> str:
         """
         Returns data insert sql code in string format
         """
         cursor = self.connection.cursor()
         result = """SET NAMES utf8mb4;
-        SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-        SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-        SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
-        SET @old_autocommit=@@autocommit;\n\n\n"""
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+SET @old_autocommit=@@autocommit;"""
         result += f'USE {self.database_name};\n\n'
 
         try:
@@ -102,8 +102,8 @@ USE {self.database_name};"""
     def restore_database_structure(self, database_structure:str) -> bool:
         cursor = self.connection.cursor()
         structure = database_structure.split(';')
-        print(structure[2])
         for element in structure:
+            print(element)
             try:
                 cursor.execute(element)
             except Exception as e:
@@ -113,7 +113,15 @@ USE {self.database_name};"""
         return True
 
     def restore_database_data(self, database_data) -> bool:
-        pass
+        cursor = self.connection.cursor()
+        data = database_data.split(';')
+        for element in data:
+            try:
+                cursor.execute(element)
+            except Exception as e:
+                print(e)
+
+        return True
 
     def restore_table(self, table_data) -> bool:
         pass
