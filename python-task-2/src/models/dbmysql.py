@@ -43,8 +43,7 @@ class MySQL(Database):
 
         return structure
 
-    # FIXME: doesn't return insert values
-    # FIXME: bad hex geometry format
+
     def get_database_data(self) -> str:
         """
         Returns data insert sql code in string format
