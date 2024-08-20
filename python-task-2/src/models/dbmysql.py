@@ -1,10 +1,13 @@
+import binascii
 import datetime
-from collections.abc import ByteString
-from statistics import geometric_mean
 
-import mysql.connector
+import networkx as nx
+
+import pymysql
 
 from src.models.database import Database
+
+mysql_version = 80003
 
 
 class MySQL(Database):
@@ -14,30 +17,38 @@ class MySQL(Database):
         self.table_name = table_name
         connection_params = self.parse_connection_string(connection_string)
 
-        self.connection = mysql.connector.connect(
+        self.connection = pymysql.connect(
             user=connection_params['user'],
             password=connection_params['password'],
             host=connection_params['host'],
-            port=connection_params['port'],
-            database=database_name
+            port=int(connection_params['port']),
+            database=database_name,
+            charset='utf8mb4'
         )
 
     def get_database_structure(self) -> str:
+        """
+        Returns database create structure sql code in string format
+        """
         cursor = self.connection.cursor()
-        cursor.execute('SHOW TABLES')
+        sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}' AND TABLE_TYPE = 'BASE TABLE'"
+        cursor.execute(sql_query)
         tables = [row[0] for row in cursor.fetchall()]
 
         structure = f'CREATE SCHEMA {self.database_name};\nUSE {self.database_name}\n\n'
         for table in tables:
             cursor.execute(f'SHOW CREATE TABLE {table}')
             create_table = cursor.fetchall()
-
             structure += create_table[0][1] + ';\n\n'
-            # print(structure)
+
         return structure
-# FIXME: doesent return insert values
-# FIXME: bad hex location format
+
+    # FIXME: doesn't return insert values
+    # FIXME: bad hex geometry format
     def get_database_data(self) -> str:
+        """
+        Returns data insert sql code in string format
+        """
         cursor = self.connection.cursor()
         result = """SET NAMES utf8mb4;
         SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
@@ -53,28 +64,28 @@ class MySQL(Database):
             for table in tables:
 
                 result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` VALUES "
-                cursor.execute(f"SHOW COLUMNS FROM `{table}`")
-                columns = [row[0] for row in cursor.fetchall()]
-                column_list = ', '.join([f'`{column}`' for column in columns])
                 cursor.execute(f"SELECT * FROM {table}")
                 rows = cursor.fetchall()
                 for row in rows:
                     formatted_row = []
                     for value in row:
-                        #print(type(value))
                         if value is None:
                             formatted_row.append('NULL')
                         elif isinstance(value, datetime.datetime):
                             formatted_row.append(f"{value.strftime('%Y-%m-%d %H:%M:%S')}")
+                        elif isinstance(value, bytes):
+                            hex_value = binascii.hexlify(value).decode('ascii')
+                            formatted_row.append(f"/*!{mysql_version} 0x{hex_value}*/")
                         else:
                             formatted_row.append(value)
-                    result += f'{formatted_row},\n'.replace('[','(').replace(']',')').replace("'NULL'", 'NULL').replace(' ','')
+                    result += f'{formatted_row},\n'.replace('[', '(').replace(']', ')').replace("'NULL'",
+                                                                                                'NULL')
 
                 if result.endswith(',\n'):
-                    result = result[:-2] + ';\nCOMMIT;\n'
+                    result = result[:-2] + ';\nCOMMIT;\n\n'
 
 
-        except mysql.connector.Error as err:
+        except pymysql.Error as err:
             raise Exception(err)
 
         return result

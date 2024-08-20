@@ -46,8 +46,12 @@ class Backup:
                 return 'Success'
 
             case _:
+                now = datetime.now()
+                timestamp = int(now.timestamp())
                 result = f'{self.backup_structure()}\n\n\n' + f'{self.backup_data()}'
-                return '_ error'
+                with open(f'{self.save_into}/{timestamp}-full.sql', 'w') as f:
+                    f.write(result)
+                return 'Success'
 
     def backup_structure(self) -> str:
         if self.db_type == 'mysql':
