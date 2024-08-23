@@ -47,7 +47,7 @@ class Backup:
             case _:
                 now = datetime.now()
                 timestamp = int(now.timestamp())
-                result = f'{self.backup_structure()}\n\n\n' + f'{self.backup_data()}'
+                result = f'{self.backup_structure()}\n\n\n--Data--' + f'{self.backup_data()}'
                 with open(f'{self.save_into}/{timestamp}-full.sql', 'w') as f:
                     f.write(result)
                 return 'Success'
@@ -64,5 +64,6 @@ class Backup:
 
     def backup_table(self) -> str:
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name, table_name=self.table_name)
+            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
+                             table_name=self.table_name)
             return db.get_table()

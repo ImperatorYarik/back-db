@@ -51,7 +51,6 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 """
         return structure
 
-    # FIXME: bad return format, need to change list to string, with correct sql format
     def get_database_data(self) -> str:
         """
         Returns data insert sql code in string format
