@@ -31,7 +31,7 @@ class MySQL(Database):
         Returns database create structure sql code in string format
         """
         cursor = self.connection.cursor()
-        sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}' AND TABLE_TYPE = 'BASE TABLE'"
+        sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}'"
         cursor.execute(sql_query)
         tables = [row[0] for row in cursor.fetchall()]
 
@@ -44,10 +44,11 @@ DROP SCHEMA IF EXISTS {self.database_name};
 CREATE SCHEMA {self.database_name};
 USE {self.database_name};"""
         for table in tables:
-            cursor.execute(f'SHOW CREATE TABLE {table}')
-            create_table = cursor.fetchall()
-            structure += create_table[0][1] + ';\n\n'
-
+            structure += self.get_table(custom_table=table)
+        structure += """SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+"""
         return structure
 
 # FIXME: bad return format, need to change list to string, with correct sql format
@@ -96,14 +97,25 @@ SET @old_autocommit=@@autocommit;"""
 
         return result
 
-    def get_table(self) -> dict:
-        pass
+    def get_table(self, custom_table:str = None, backup_data: bool = False) -> str:
+
+        if custom_table is not None:
+            table = custom_table
+        else: table = self.table_name
+        cursor = self.connection.cursor()
+        structure = ''
+        cursor.execute(f'SHOW CREATE TABLE `{table}`')
+        create_table = cursor.fetchall()
+        structure += create_table[0][1] + ';\n\n'
+        if backup_data:
+
+        return structure
 
     def restore_database_structure(self, database_structure:str) -> bool:
         cursor = self.connection.cursor()
         structure = database_structure.split(';')
         for element in structure:
-            print(element)
+            #print(element)
             try:
                 cursor.execute(element)
             except Exception as e:

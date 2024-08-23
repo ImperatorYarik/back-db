@@ -61,3 +61,8 @@ class Backup:
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_data()
+
+    def backup_table(self) -> str:
+        if self.db_type == 'mysql':
+            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name, table_name=self.table_name)
+            return db.get_table()

@@ -4,7 +4,7 @@ services:
     container_name: ${PROJECT_NAME}-mysql
     restart: unless-stopped
     volumes:
-      - mysql:/var/lib/mysql
+      - mysql-python-task-2:/var/lib/mysql
       - ./test-dumps/sakila-db(mysql):/home
     ports:
       - 3306:3306
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
     user: postgres
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres-python-task-2:/var/lib/postgresql/data
       - ./test-dumps/northwind-db(postgres):/home
     ports:
       - 5432:5432
@@ -37,5 +37,5 @@ networks:
   python-task-2-network:
 
 volumes:
-  mysql:
-  postgres:
+  mysql-python-task-2:
+  postgres-python-task-2:
