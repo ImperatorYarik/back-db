@@ -51,7 +51,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 """
         return structure
 
-# FIXME: bad return format, need to change list to string, with correct sql format
+    # FIXME: bad return format, need to change list to string, with correct sql format
     def get_database_data(self) -> str:
         """
         Returns data insert sql code in string format
@@ -69,27 +69,7 @@ SET @old_autocommit=@@autocommit;"""
             tables = [row[0] for row in cursor.fetchall()]
 
             for table in tables:
-
-                result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` VALUES "
-                cursor.execute(f"SELECT * FROM {table}")
-                rows = cursor.fetchall()
-                for row in rows:
-                    formatted_row = []
-                    for value in row:
-                        if value is None:
-                            formatted_row.append('NULL')
-                        elif isinstance(value, datetime.datetime):
-                            formatted_row.append(f"{value.strftime('%Y-%m-%d %H:%M:%S')}")
-                        elif isinstance(value, bytes):
-                            hex_value = binascii.hexlify(value).decode('ascii')
-                            formatted_row.append(f"/*!{mysql_version} 0x{hex_value}*/")
-                        else:
-                            formatted_row.append(value)
-                    result += f'{formatted_row},\n'.replace('[', '(').replace(']', ')').replace("'NULL'",
-                                                                                                'NULL')
-
-                if result.endswith(',\n'):
-                    result = result[:-2] + ';\nCOMMIT;\n\n'
+                result += self.get_table_data(custom_table=table)
 
 
         except pymysql.Error as err:
@@ -97,30 +77,79 @@ SET @old_autocommit=@@autocommit;"""
 
         return result
 
-    def get_table(self, custom_table:str = None, backup_data: bool = False) -> str:
-
+    def get_table(self, custom_table: str = None) -> str:
+        structure = ''
         if custom_table is not None:
             table = custom_table
-        else: table = self.table_name
+        else:
+            table = self.table_name
+            structure += f"""SET NAMES utf8mb4;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+
+DROP SCHEMA IF EXISTS {self.database_name};
+CREATE SCHEMA {self.database_name};
+USE {self.database_name};\n"""
+            structure += """SET NAMES utf8mb4;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+SET @old_autocommit=@@autocommit;"""
         cursor = self.connection.cursor()
-        structure = ''
         cursor.execute(f'SHOW CREATE TABLE `{table}`')
         create_table = cursor.fetchall()
         structure += create_table[0][1] + ';\n\n'
-        if backup_data:
+        if self.table_name:
+            structure += """SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+SET NAMES utf8mb4;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+SET @old_autocommit=@@autocommit;
+"""
 
         return structure
 
-    def restore_database_structure(self, database_structure:str) -> bool:
+    def get_table_data(self, custom_table: str) -> str:
+        cursor = self.connection.cursor()
+        result = ''
+        result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{custom_table}` VALUES "
+        cursor.execute(f"SELECT * FROM {custom_table}")
+        rows = cursor.fetchall()
+        for row in rows:
+            formatted_data = ''
+            for value in row:
+                if value is None:
+                    formatted_data += 'NULL'
+                elif isinstance(value, str):
+                    formatted_data += f'\'{value}\''
+                elif isinstance(value, datetime.datetime):
+                    formatted_data += f"'{value.strftime('%Y-%m-%d %H:%M:%S')}'"
+                elif isinstance(value, bytes):
+                    hex_value = binascii.hexlify(value).decode('ascii')
+                    formatted_data += f'/*!{mysql_version} 0x{hex_value}*/'
+                else:
+                    formatted_data += f'{value}'
+                formatted_data += ','
+            formatted_data = formatted_data[:-1]
+            result += f'({formatted_data}),\n'
+
+        if result.endswith(',\n'):
+            result = result[:-2] + ';\nCOMMIT;\n\n'
+        return result
+
+    def restore_database_structure(self, database_structure: str) -> bool:
         cursor = self.connection.cursor()
         structure = database_structure.split(';')
         for element in structure:
-            #print(element)
+            # print(element)
             try:
                 cursor.execute(element)
             except Exception as e:
                 print(e)
-
 
         return True
 

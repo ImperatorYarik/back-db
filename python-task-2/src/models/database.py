@@ -18,7 +18,12 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def get_table(self, custom_table: str, backup_data: bool) -> str:
+    def get_table(self, custom_table: str) -> str:
+        """Get table structure with data"""
+        pass
+
+    @abstractmethod
+    def get_table_data(self, custom_table: str) -> str:
         """Get table structure with data"""
         pass
 
