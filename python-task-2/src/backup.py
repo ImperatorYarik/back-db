@@ -9,7 +9,7 @@ class Backup:
 
     def __init__(self, db_type: str, database_name: str, connection_string: str, table_name: str = None,
                  op_type: str = None,
-                 is_save_one: bool = False, is_save_multiple: bool = False, save_into: str = None) -> None:
+                 is_save_one: bool = True, is_save_multiple: bool = False, save_into: str = None) -> None:
         logger = logging.getLogger(__name__)
         self.db_type = db_type
         self.database_name = database_name
@@ -29,7 +29,7 @@ class Backup:
             os.makedirs(self.save_into, exist_ok=True)
 
     def backup_database(self) -> str:
-        """Backups and writes to file backups with type match"""
+        """Backups and writes to file with type match"""
         match self.op_type:
             case 'structure':
                 now = datetime.now()
@@ -47,9 +47,17 @@ class Backup:
             case _:
                 now = datetime.now()
                 timestamp = int(now.timestamp())
-                result = f'{self.backup_structure()}\n\n\n--Data--' + f'{self.backup_data()}'
-                with open(f'{self.save_into}/{timestamp}-full.sql', 'w') as f:
-                    f.write(result)
+                if self.is_save_multiple:
+                    result = f'{self.backup_structure()}\n\n\n'
+                    with open(f'{self.save_into}/{timestamp}-full.DDL.sql', 'w') as f:
+                        f.write(result)
+                    result = f'{self.backup_data()}'
+                    with open(f'{self.save_into}/{timestamp}-full.DML.sql', 'w') as f:
+                        f.write(result)
+                else:
+                    result = f'{self.backup_structure()}\n\n\n--Data--\n' + f'{self.backup_data()}'
+                    with open(f'{self.save_into}/{timestamp}-full.sql', 'w') as f:
+                        f.write(result)
                 return 'Success'
 
     def backup_structure(self) -> str:
