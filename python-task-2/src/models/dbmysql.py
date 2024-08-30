@@ -25,15 +25,20 @@ class MySQL(Database):
             database=database_name,
             charset='utf8mb4'
         )
+    def get_all_tables(self) -> list:
+        """Return tables list"""
+        cursor = self.connection.cursor()
+        sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}'"
+        cursor.execute(sql_query)
+        return [row[0] for row in cursor.fetchall()]
 
     def get_database_structure(self) -> str:
         """
         Returns database create structure sql code in string format
         """
         cursor = self.connection.cursor()
-        sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}'"
-        cursor.execute(sql_query)
-        tables = [row[0] for row in cursor.fetchall()]
+
+        tables = self.get_all_tables()
 
         structure = f"""SET NAMES utf8mb4;
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
@@ -45,15 +50,7 @@ CREATE SCHEMA {self.database_name};
 USE {self.database_name};"""
         for table in tables:
             structure += self.get_table(custom_table=table)
-        cursor.execute(f""" SELECT DISTINCT USER, HOST 
-        FROM mysql.db 
-        WHERE DB = '{self.database_name}'""")
-        users = cursor.fetchall()
-        for user, host in users:
-            cursor.execute(f"SHOW GRANTS FOR `{user}`@`{host}`;")
-            grants = cursor.fetchall()
-            for grant in grants:
-                structure += f"\n{grant[0]};"
+        structure += self.get_grants()
         structure += """SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
@@ -148,6 +145,19 @@ SET @old_autocommit=@@autocommit;
             result = result[:-2] + ';\nCOMMIT;\n\n'
         return result
 
+    def get_grants(self):
+        cursor = self.connection.cursor()
+        result = ''
+        cursor.execute(f""" SELECT DISTINCT USER, HOST 
+                FROM mysql.db 
+                WHERE DB = '{self.database_name}'""")
+        users = cursor.fetchall()
+        for user, host in users:
+            cursor.execute(f"SHOW GRANTS FOR `{user}`@`{host}`;")
+            grants = cursor.fetchall()
+            for grant in grants:
+                result += f"\n{grant[0]};"
+        return result
 
     def restore_database_structure(self, database_structure: str) -> bool:
         cursor = self.connection.cursor()

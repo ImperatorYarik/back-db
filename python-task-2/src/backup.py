@@ -56,7 +56,6 @@ class Backup:
                 return 'Success'
 
             case _:
-
                 if self.is_save_multiple:
                     result = f'{self.backup_structure()}\n\n\n'
 

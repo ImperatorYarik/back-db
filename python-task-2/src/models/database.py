@@ -6,7 +6,10 @@ class Database(ABC):
     @abstractmethod
     def __init__(self, database_name: str, connection_string: str) -> None:
         pass
-
+    @abstractmethod
+    def get_all_tables(self) -> list:
+        """Get all tables in the database."""
+        pass
     @abstractmethod
     def get_database_structure(self) -> str:
         """Get database structure"""
@@ -25,6 +28,10 @@ class Database(ABC):
     @abstractmethod
     def get_table_data(self, custom_table: str) -> str:
         """Get table structure with data"""
+        pass
+    @abstractmethod
+    def get_grants(self) -> str:
+        """Get grants"""
         pass
 
     @abstractmethod
