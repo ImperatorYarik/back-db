@@ -58,6 +58,7 @@ class Backup:
             case _:
                 if self.is_save_multiple:
                     result = f'{self.backup_structure()}\n\n\n'
+                    # TODO: Make separate backup (Get list of all tables and execute methods)
 
                 else:
                     if self.table_name:
