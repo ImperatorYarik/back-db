@@ -25,6 +25,7 @@ class MySQL(Database):
             database=database_name,
             charset='utf8mb4'
         )
+
     def get_all_tables(self) -> list:
         """
         Returns a list of all tables in the database
@@ -194,10 +195,6 @@ SET @old_autocommit=@@autocommit;
                 print(e)
 
         return True
-
-
-
-
 
     def parse_connection_string(self, connection_string: str) -> dict:
         """

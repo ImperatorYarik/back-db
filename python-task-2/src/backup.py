@@ -28,7 +28,10 @@ class Backup:
             os.makedirs(self.save_into, exist_ok=True)
 
     def backup_database(self) -> str:
-        """Backups and writes to file with type match"""
+        """
+        Writes sql code in files and operates backup format
+        :return: Notification string
+        """
         now = datetime.now()
         timestamp = int(now.timestamp())
         save_into = f"{self.save_into}/{timestamp}"
@@ -80,27 +83,47 @@ class Backup:
                     return 'Success'
 
     def backup_structure(self) -> str:
+        """
+        Connects to database and returns schema
+        :return: sql code
+        """
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_structure()
 
     def backup_data(self) -> str:
+        """
+        Connects to database and returns insert data
+        :return: sql code
+        """
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_data()
 
     def backup_table(self) -> str:
+        """
+        Connects to database and returns table creation sql
+        :return: sql code
+        """
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table()
     def backup_table_data(self) -> str:
+        """
+        Connects to database and returns table insert data
+        :return: sql code
+        """
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table_data()
 
     def backup_separate(self) -> dict:
+        """
+        Connects to database and returns all sql data in comfortable format with separate sql code types (DDL, DML, DCL)
+        :return: dictionary of dictionaries {type}{table}[sql code]
+        """
         if self.db_type == 'mysql':
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
