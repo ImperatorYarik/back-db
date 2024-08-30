@@ -45,6 +45,15 @@ CREATE SCHEMA {self.database_name};
 USE {self.database_name};"""
         for table in tables:
             structure += self.get_table(custom_table=table)
+        cursor.execute(f""" SELECT DISTINCT USER, HOST 
+        FROM mysql.db 
+        WHERE DB = '{self.database_name}'""")
+        users = cursor.fetchall()
+        for user, host in users:
+            cursor.execute(f"SHOW GRANTS FOR `{user}`@`{host}`;")
+            grants = cursor.fetchall()
+            for grant in grants:
+                structure += f"\n{grant[0]};"
         structure += """SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
@@ -87,14 +96,8 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
 
-DROP SCHEMA IF EXISTS {self.database_name};
-CREATE SCHEMA {self.database_name};
 USE {self.database_name};\n"""
-            structure += """SET NAMES utf8mb4;
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
-SET @old_autocommit=@@autocommit;"""
+
         cursor = self.connection.cursor()
         cursor.execute(f'SHOW CREATE TABLE `{table}`')
         create_table = cursor.fetchall()
@@ -112,11 +115,16 @@ SET @old_autocommit=@@autocommit;
 
         return structure
 
-    def get_table_data(self, custom_table: str) -> str:
+    def get_table_data(self, custom_table: str = None) -> str:
         cursor = self.connection.cursor()
-        result = ''
-        result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{custom_table}` VALUES "
-        cursor.execute(f"SELECT * FROM {custom_table}")
+        if custom_table is not None:
+            table = custom_table
+            result = ''
+        else:
+            result = f'USE {self.database_name};\n\n'
+            table = self.table_name
+        result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` VALUES "
+        cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
         for row in rows:
             formatted_data = ''
@@ -140,6 +148,7 @@ SET @old_autocommit=@@autocommit;
             result = result[:-2] + ';\nCOMMIT;\n\n'
         return result
 
+
     def restore_database_structure(self, database_structure: str) -> bool:
         cursor = self.connection.cursor()
         structure = database_structure.split(';')
@@ -152,6 +161,7 @@ SET @old_autocommit=@@autocommit;
 
         return True
 
+
     def restore_database_data(self, database_data) -> bool:
         cursor = self.connection.cursor()
         data = database_data.split(';')
@@ -163,8 +173,10 @@ SET @old_autocommit=@@autocommit;
 
         return True
 
+
     def restore_table(self, table_data) -> bool:
         pass
+
 
     def parse_connection_string(self, connection_string: str) -> dict:
         import re

@@ -50,12 +50,11 @@ class Restore:
             case 'data':
                 with open(f'{self.file}/{self.backup_version}-data.sql', 'r') as file:
                     data = file.read()
-                #print(data)
                 return self.restore_data(data)
             case _:
                 with open(f'{self.file}/{self.backup_version}-full.sql', 'w') as file:
                     data = file.read()
 
-                elements = data.split('--DATA--')
+                elements = data.split('-- DATA --')
                 return self.restore_structure(elements[0]), self.restore_data(elements[1])
 

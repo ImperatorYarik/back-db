@@ -30,35 +30,46 @@ class Backup:
 
     def backup_database(self) -> str:
         """Backups and writes to file with type match"""
+        now = datetime.now()
+        timestamp = int(now.timestamp())
+        save_into = f"{self.save_into}/{timestamp}"
+        os.makedirs(save_into, exist_ok=True)
+
         match self.op_type:
             case 'structure':
-                now = datetime.now()
-                timestamp = int(now.timestamp())
-                with open(f'{self.save_into}/{timestamp}-structure.sql', 'w') as f:
+
+                if self.table_name:
+                    with open(f'{save_into}/{self.table_name}.DDL.sql', 'w') as f:
+                        f.write(self.backup_table())
+                    return 'Success'
+                with open(f'{save_into}/{self.database_name}-structure.sql', 'w') as f:
                     f.write(self.backup_structure())
                 return 'Success'
             case 'data':
-                now = datetime.now()
-                timestamp = int(now.timestamp())
-                with open(f'{self.save_into}/{timestamp}-data.sql', 'w') as f:
+
+                if self.table_name:
+                    with open(f'{save_into}/{self.table_name}.DML.sql', 'w') as f:
+                        f.write(self.backup_table_data())
+                    return 'Success'
+                with open(f'{save_into}/{self.database_name}-data.sql', 'w') as f:
                     f.write(self.backup_data())
                 return 'Success'
 
             case _:
-                now = datetime.now()
-                timestamp = int(now.timestamp())
+
                 if self.is_save_multiple:
                     result = f'{self.backup_structure()}\n\n\n'
-                    with open(f'{self.save_into}/{timestamp}-full.DDL.sql', 'w') as f:
-                        f.write(result)
-                    result = f'{self.backup_data()}'
-                    with open(f'{self.save_into}/{timestamp}-full.DML.sql', 'w') as f:
-                        f.write(result)
+
                 else:
-                    result = f'{self.backup_structure()}\n\n\n--Data--\n' + f'{self.backup_data()}'
-                    with open(f'{self.save_into}/{timestamp}-full.sql', 'w') as f:
+                    if self.table_name:
+                        result = f'{self.backup_table()}\n\n\n-- DATA --\n' + f'{self.backup_table_data()}'
+                        with open(f'{save_into}/{self.table_name}.sql', 'w') as f:
+                            f.write(result)
+                        return 'Success'
+                    result = f'{self.backup_structure()}\n\n\n-- DATA --\n' + f'{self.backup_data()}'
+                    with open(f'{save_into}/{self.database_name}.sql', 'w') as f:
                         f.write(result)
-                return 'Success'
+                    return 'Success'
 
     def backup_structure(self) -> str:
         if self.db_type == 'mysql':
@@ -75,3 +86,8 @@ class Backup:
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table()
+    def backup_table_data(self) -> str:
+        if self.db_type == 'mysql':
+            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
+                             table_name=self.table_name)
+            return db.get_table_data()

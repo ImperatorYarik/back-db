@@ -1,6 +1,5 @@
 import logging
 import argparse
-from email.policy import default
 
 import src.backup as backup
 import src.restore as restore
