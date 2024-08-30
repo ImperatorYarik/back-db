@@ -26,7 +26,10 @@ class MySQL(Database):
             charset='utf8mb4'
         )
     def get_all_tables(self) -> list:
-        """Return tables list"""
+        """
+        Returns a list of all tables in the database
+        :return:
+        """
         cursor = self.connection.cursor()
         sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}'"
         cursor.execute(sql_query)
@@ -34,7 +37,8 @@ class MySQL(Database):
 
     def get_database_structure(self) -> str:
         """
-        Returns database create structure sql code in string format
+        Creates a string sql code for mysql database schema creation with all tables
+        :return: sql code represented as string
         """
         cursor = self.connection.cursor()
 
@@ -59,7 +63,8 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
     def get_database_data(self) -> str:
         """
-        Returns data insert sql code in string format
+        Creates a string sql code for mysql database data insertion for all tables
+        :return: sql code represented as string
         """
         cursor = self.connection.cursor()
         result = """SET NAMES utf8mb4;
@@ -83,6 +88,11 @@ SET @old_autocommit=@@autocommit;"""
         return result
 
     def get_table(self, custom_table: str = None) -> str:
+        """
+        Creates a string sql code for mysql one table creation
+        :param custom_table: if class param is not set
+        :return: a sql code represented as string
+        """
         structure = ''
         if custom_table is not None:
             table = custom_table
@@ -113,6 +123,11 @@ SET @old_autocommit=@@autocommit;
         return structure
 
     def get_table_data(self, custom_table: str = None) -> str:
+        """
+        Creates a string sql code for mysql one table data insertion
+        :param custom_table: if class param is not set
+        :return: a sql code represented as string
+        """
         cursor = self.connection.cursor()
         if custom_table is not None:
             table = custom_table
@@ -145,7 +160,11 @@ SET @old_autocommit=@@autocommit;
             result = result[:-2] + ';\nCOMMIT;\n\n'
         return result
 
-    def get_grants(self):
+    def get_grants(self) -> str:
+        """
+        Creates a string sql code for mysql grants creation
+        :return: a sql code represented as string
+        """
         cursor = self.connection.cursor()
         result = ''
         cursor.execute(f""" SELECT DISTINCT USER, HOST 
@@ -159,9 +178,14 @@ SET @old_autocommit=@@autocommit;
                 result += f"\n{grant[0]};"
         return result
 
-    def restore_database_structure(self, database_structure: str) -> bool:
+    def restore_database_sql(self, sql: str) -> bool:
+        """
+        Executes sql script
+        :param sql: sql code which needs to be executed
+        :return: True if success
+        """
         cursor = self.connection.cursor()
-        structure = database_structure.split(';')
+        structure = sql.split(';')
         for element in structure:
             # print(element)
             try:
@@ -172,23 +196,15 @@ SET @old_autocommit=@@autocommit;
         return True
 
 
-    def restore_database_data(self, database_data) -> bool:
-        cursor = self.connection.cursor()
-        data = database_data.split(';')
-        for element in data:
-            try:
-                cursor.execute(element)
-            except Exception as e:
-                print(e)
 
-        return True
-
-
-    def restore_table(self, table_data) -> bool:
-        pass
 
 
     def parse_connection_string(self, connection_string: str) -> dict:
+        """
+        Parses mysql connection string in pymysql acceptable format
+        :param connection_string: connection string to parse
+        :return: dictionary of connection data (user, pass, host, port, database)
+        """
         import re
         pattern = r'mysql://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^:]+):(?P<port>\d+)/'
         match = re.match(pattern, connection_string)

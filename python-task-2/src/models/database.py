@@ -35,16 +35,7 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def restore_database_structure(self, database_data) -> bool:
+    def restore_database_sql(self, database_data) -> bool:
         """Restore database structure"""
         pass
 
-    @abstractmethod
-    def restore_database_data(self, database_data) -> bool:
-        """Restore database data"""
-        pass
-
-    @abstractmethod
-    def restore_table(self, table_data) -> bool:
-        """Restore database data"""
-        pass

@@ -7,7 +7,7 @@ import src.restore as restore
 
 def backup_controller(args):
     bk = backup.Backup(db_type=args.db_type, database_name=args.db, connection_string=args.connection_string,
-                       table_name=args.table, op_type=args.type, is_save_one=args.save_one,
+                       table_name=args.table, op_type=args.type,
                        is_save_multiple=args.save_multi, save_into=args.save_into)
 
     return bk.backup_database()
@@ -54,11 +54,6 @@ def main():
         help='Type of database backup'
     )
 
-    backup_parser.add_argument(
-        "--save-one",
-        help="Save all in one",
-        action="store_true"
-    )
     backup_parser.add_argument(
         "--save-multi",
         help="Save in multiple files.",

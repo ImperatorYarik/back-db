@@ -9,14 +9,13 @@ class Backup:
 
     def __init__(self, db_type: str, database_name: str, connection_string: str, table_name: str = None,
                  op_type: str = None,
-                 is_save_one: bool = True, is_save_multiple: bool = False, save_into: str = None) -> None:
+                 is_save_multiple: bool = False, save_into: str = None) -> None:
         logger = logging.getLogger(__name__)
         self.db_type = db_type
         self.database_name = database_name
         self.connection_string = connection_string
         self.table_name = table_name
         self.op_type = op_type
-        self.is_save_one = is_save_one
         self.is_save_multiple = is_save_multiple
         self.save_into = save_into
         if self.save_into is not None:
@@ -57,7 +56,6 @@ class Backup:
 
             case _:
                 if self.is_save_multiple:
-                    # TODO: Make separate backup (Get list of all tables and execute methods)
                     sql_dict = self.backup_separate()
                     for table, structure in sql_dict["ddl"].items():
                         with open(f'{save_into}/{table}.DDL.sql', 'w') as f:
