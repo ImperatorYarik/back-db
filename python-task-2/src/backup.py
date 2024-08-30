@@ -57,8 +57,18 @@ class Backup:
 
             case _:
                 if self.is_save_multiple:
-                    result = f'{self.backup_structure()}\n\n\n'
                     # TODO: Make separate backup (Get list of all tables and execute methods)
+                    sql_dict = self.backup_separate()
+                    for table, structure in sql_dict["ddl"].items():
+                        with open(f'{save_into}/{table}.DDL.sql', 'w') as f:
+                            f.write(structure)
+                    for table, structure in sql_dict["dcl"].items():
+                        with open(f'{save_into}/{table}.DCL.sql', 'w') as f:
+                            f.write(structure)
+                    for db, structure in sql_dict["dml"].items():
+                        with open(f'{save_into}/{db}.DML.sql', 'w') as f:
+                            f.write(structure)
+                    return 'Success'
 
                 else:
                     if self.table_name:
@@ -91,3 +101,20 @@ class Backup:
             db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table_data()
+
+    def backup_separate(self) -> dict:
+        if self.db_type == 'mysql':
+            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
+                             table_name=self.table_name)
+            tables = db.get_all_tables()
+            result = {
+                "ddl": {},
+                "dml": {},
+                "dcl": {}
+            }
+
+            for table in tables:
+                result["ddl"][table] = db.get_table(custom_table=table)
+                result["dml"][table] = db.get_table_data(custom_table=table)
+            result["dcl"][self.database_name] = db.get_grants()
+            return result
