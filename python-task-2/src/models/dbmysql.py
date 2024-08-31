@@ -1,5 +1,6 @@
 import binascii
 import datetime
+from venv import logger
 
 import networkx as nx
 
@@ -16,15 +17,42 @@ class MySQL(Database):
         self.connection_string = connection_string
         self.table_name = table_name
         connection_params = self.parse_connection_string(connection_string)
+        try:
+            self.connection = pymysql.connect(
+                user=connection_params['user'],
+                password=connection_params['password'],
+                host=connection_params['host'],
+                port=int(connection_params['port']),
+                database=database_name,
+                charset='utf8mb4'
+            )
+        except Exception as e:
+            logger.warning(e)
+            self.connection = pymysql.connect(
+                user=connection_params['user'],
+                password=connection_params['password'],
+                host=connection_params['host'],
+                port=int(connection_params['port']),
+                charset='utf8mb4'
+            )
+            cursor = self.connection.cursor()
+            cursor.execute(f'CREATE SCHEMA {self.database_name}')
+        self.turn_off_checks_sql = f"""SET NAMES utf8mb4;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
 
-        self.connection = pymysql.connect(
-            user=connection_params['user'],
-            password=connection_params['password'],
-            host=connection_params['host'],
-            port=int(connection_params['port']),
-            database=database_name,
-            charset='utf8mb4'
-        )
+"""
+        self.turn_off_checks_tables_sql = """SET NAMES utf8mb4;
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+SET @old_autocommit=@@autocommit;"""
+
+        self.turn_on_checks_sql = """SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+"""
 
     def get_all_tables(self) -> list:
         """
@@ -45,21 +73,14 @@ class MySQL(Database):
 
         tables = self.get_all_tables()
 
-        structure = f"""SET NAMES utf8mb4;
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
-
-DROP SCHEMA IF EXISTS {self.database_name};
+        structure = self.turn_off_checks_sql + f"""DROP SCHEMA IF EXISTS {self.database_name};
 CREATE SCHEMA {self.database_name};
 USE {self.database_name};"""
+
         for table in tables:
             structure += self.get_table(custom_table=table)
         structure += self.get_grants()
-        structure += """SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-"""
+        structure += self.turn_on_checks_sql
         return structure
 
     def get_database_data(self) -> str:
@@ -68,11 +89,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
         :return: sql code represented as string
         """
         cursor = self.connection.cursor()
-        result = """SET NAMES utf8mb4;
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
-SET @old_autocommit=@@autocommit;"""
+        result = self.turn_off_checks_tables_sql
         result += f'USE {self.database_name};\n\n'
 
         try:
@@ -99,27 +116,16 @@ SET @old_autocommit=@@autocommit;"""
             table = custom_table
         else:
             table = self.table_name
-            structure += f"""SET NAMES utf8mb4;
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+            structure += self.turn_off_checks_sql
 
-USE {self.database_name};\n"""
+
 
         cursor = self.connection.cursor()
         cursor.execute(f'SHOW CREATE TABLE `{table}`')
         create_table = cursor.fetchall()
         structure += create_table[0][1] + ';\n\n'
         if self.table_name:
-            structure += """SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-SET NAMES utf8mb4;
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
-SET @old_autocommit=@@autocommit;
-"""
+            structure += self.turn_off_checks_sql
 
         return structure
 
@@ -187,13 +193,16 @@ SET @old_autocommit=@@autocommit;
         """
         cursor = self.connection.cursor()
         structure = sql.split(';')
-        for element in structure:
-            # print(element)
-            try:
-                cursor.execute(element)
-            except Exception as e:
-                print(e)
-
+        try:
+            for element in structure:
+                try:
+                    cursor.execute(f'USE {self.database_name};{element}')
+                except Exception as e:
+                    logger.warning(f'{e}\n Trying to execute with checks off')
+                    cursor.execute(f'{self.turn_off_checks_sql}{self.turn_off_checks_tables_sql}USE {self.database_name};{element}{self.turn_on_checks_sql}')
+        except Exception as e:
+            logger.error(e)
+            return False
         return True
 
     def parse_connection_string(self, connection_string: str) -> dict:

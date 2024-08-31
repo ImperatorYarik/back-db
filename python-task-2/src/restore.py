@@ -1,5 +1,6 @@
 import os
 
+from networkx import is_empty
 from src.models import dbmysql as mysql
 
 
@@ -32,35 +33,15 @@ class Restore:
         """
         Delegates restoration tasks to another methods
         """
-        # TODO: Make selection menu for database backups
-        # TODO: Add 'SELECT ALL' feature
         version_folder = f'{self.file}/{self.backup_version}'
         files = os.listdir(version_folder)
-        if len(files) > 1:
-            file_number = 0
-            files_list = []
-            sql = ''
-            for file in files:
-                files_list.append(file)
-                print(f'[{file_number}] {file}')
-                file_number += 1
-            isok = False
-            choice_list = []
-            while not isok:
-                choice = input("Please select a file to restore (if you want to restore multiple files, make spaces between numbers): ")
-                choice_list = choice.strip().split(' ')
-                for number in choice:
-                    if int(number) and int(number) < len(files_list) or number == '*':
-                        isok = True
-                    else:
-                        print('Please insert correct number!')
-            print(choice_list)
-            for number in choice_list:
-                sql += files_list[int(number)]
-                print(sql)
-
+        sql = ''
+        if self.restore_type:
+            pass
         else:
-            with open(files[0], 'r') as f:
-                sql = f.read()
-            return self.restore_sql(sql=sql)
+            for file in files:
+                with open(version_folder + '/' + file, 'r') as f:
+                    sql = f.read()
+                self.restore_sql(sql=sql)
+
 

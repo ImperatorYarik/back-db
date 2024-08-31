@@ -7,7 +7,23 @@ services:
       - mysql-python-task-2:/var/lib/mysql
       - ./test-dumps/sakila-db(mysql):/home
     ports:
-      - 3306:3306
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - python-task-2-network
+
+  mysql2:
+    image: mysql:8.0.20
+    container_name: ${PROJECT_NAME}-mysql2
+    restart: unless-stopped
+    volumes:
+      - mysql-python-task-2-2:/var/lib/mysql
+    ports:
+      - "3307:3306"
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -25,7 +41,7 @@ services:
       - postgres-python-task-2:/var/lib/postgresql/data
       - ./test-dumps/northwind-db(postgres):/home
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -38,4 +54,5 @@ networks:
 
 volumes:
   mysql-python-task-2:
+  mysql-python-task-2-2:
   postgres-python-task-2:
