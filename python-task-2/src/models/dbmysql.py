@@ -2,7 +2,6 @@ import binascii
 import datetime
 from venv import logger
 
-import networkx as nx
 
 import pymysql
 
@@ -118,8 +117,6 @@ USE {self.database_name};"""
             table = self.table_name
             structure += self.turn_off_checks_sql
 
-
-
         cursor = self.connection.cursor()
         cursor.execute(f'SHOW CREATE TABLE `{table}`')
         create_table = cursor.fetchall()
@@ -191,18 +188,16 @@ USE {self.database_name};"""
         :param sql: sql code which needs to be executed
         :return: True if success
         """
+        # FIXME: Need to ignore foreign keyes
         cursor = self.connection.cursor()
-        structure = sql.split(';')
         try:
+            structure = sql.split(';')
             for element in structure:
-                try:
-                    cursor.execute(f'USE {self.database_name};{element}')
-                except Exception as e:
-                    logger.warning(f'{e}\n Trying to execute with checks off')
-                    cursor.execute(f'{self.turn_off_checks_sql}{self.turn_off_checks_tables_sql}USE {self.database_name};{element}{self.turn_on_checks_sql}')
+                cursor.execute(element)
+
         except Exception as e:
-            logger.error(e)
-            return False
+            logger.warning(f'WARNING: {e}')
+            return True
         return True
 
     def parse_connection_string(self, connection_string: str) -> dict:

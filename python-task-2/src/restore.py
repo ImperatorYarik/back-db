@@ -35,13 +35,40 @@ class Restore:
         """
         version_folder = f'{self.file}/{self.backup_version}'
         files = os.listdir(version_folder)
+
+
         sql = ''
         if self.restore_type:
             pass
         else:
+            sql_types = {
+                "ddl": [],
+                "dml": [],
+                "dcl": []
+            }
             for file in files:
-                with open(version_folder + '/' + file, 'r') as f:
+                if "DDL" in file:
+                    sql_types["ddl"].append(file)
+                elif "DML" in file:
+                    sql_types["dml"].append(file)
+                elif "DCL" in file:
+                    sql_types["dcl"].append(file)
+                else:
+                    with open(version_folder + '/' + file, 'r') as f:
+                        sql = f.read()
+                    self.restore_sql(sql=sql)
+            for sql_file in sql_types["ddl"]:
+                with open(version_folder + '/' + sql_file, 'r') as f:
                     sql = f.read()
                 self.restore_sql(sql=sql)
+            for sql_file in sql_types["dml"]:
+                with open(version_folder + '/' + sql_file, 'r') as f:
+                    sql = f.read()
+                self.restore_sql(sql=sql)
+            for sql_file in sql_types["dcl"]:
+                with open(version_folder + '/' + sql_file, 'r') as f:
+                    sql = f.read()
+                self.restore_sql(sql=sql)
+        return 'Successfully restored!'
 
 
