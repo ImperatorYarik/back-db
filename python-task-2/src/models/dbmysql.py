@@ -1,13 +1,13 @@
 import binascii
 import datetime
-from venv import logger
-
+import logging
 
 import pymysql
 
 from src.models.database import Database
 
 mysql_version = 80003
+logger = logging.getLogger(__name__)
 
 
 class MySQL(Database):
@@ -68,7 +68,6 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
         Creates a string sql code for mysql database schema creation with all tables
         :return: sql code represented as string
         """
-        cursor = self.connection.cursor()
 
         tables = self.get_all_tables()
 
@@ -100,6 +99,7 @@ USE {self.database_name};"""
 
 
         except pymysql.Error as err:
+            logger.error(err)
             raise Exception(err)
 
         return result
@@ -116,6 +116,8 @@ USE {self.database_name};"""
         else:
             table = self.table_name
             structure += self.turn_off_checks_sql
+
+        logger.info(f'Getting structure of {table}')
 
         cursor = self.connection.cursor()
         cursor.execute(f'SHOW CREATE TABLE `{table}`')
@@ -139,6 +141,9 @@ USE {self.database_name};"""
         else:
             result = f'USE {self.database_name};\n\n'
             table = self.table_name
+
+        logger.info(f'Getting data from table: {table}')
+
         result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` VALUES "
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
@@ -171,6 +176,9 @@ USE {self.database_name};"""
         """
         cursor = self.connection.cursor()
         result = ''
+
+        logger.info(f'Getting grants from {self.database_name}')
+
         cursor.execute(f""" SELECT DISTINCT USER, HOST 
                 FROM mysql.db 
                 WHERE DB = '{self.database_name}'""")
@@ -191,13 +199,14 @@ USE {self.database_name};"""
         cursor = self.connection.cursor()
         sql = self.turn_off_checks_sql + self.turn_off_checks_tables_sql + f'USE {self.database_name};' + sql + self.turn_on_checks_sql
         try:
+            logger.debug('Executing sql script...')
             structure = sql.split(';')
             for element in structure:
                 cursor.execute(element)
 
         except Exception as e:
             if 'Query was empty' not in str(e):
-                logger.debug(f'WARNING: {e}')
+                logger.warning(e)
             return True
         return True
 
@@ -209,6 +218,7 @@ USE {self.database_name};"""
         """
         import re
         pattern = r'mysql://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^:]+):(?P<port>\d+)/'
+        logger.debug('Parsing connection string...')
         match = re.match(pattern, connection_string)
         if not match:
             raise ValueError("Invalid connection string format")

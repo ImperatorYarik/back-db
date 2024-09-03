@@ -1,11 +1,14 @@
+import sys
 import logging
 import argparse
+from venv import logger
 
 import src.backup as backup
 import src.restore as restore
 
-
+logger = logging.getLogger(__name__)
 def backup_controller(args):
+    logger.debug(f'Parsed arguments: {args}')
     bk = backup.Backup(db_type=args.db_type, database_name=args.db, connection_string=args.connection_string,
                        table_name=args.table, op_type=args.type,
                        is_save_multiple=args.save_multi, save_into=args.save_into)
@@ -14,6 +17,7 @@ def backup_controller(args):
 
 
 def restore_controller(args):
+    logger.debug(f'Parsed arguments: {args}')
     rs = restore.Restore(db_type=args.db_type, database_name=args.db, connection_string=args.connection_string,
                          file=args.file, backup_version=args.backup_version, restore_type=args.type,
                          table_name=args.table)
@@ -109,9 +113,24 @@ def main():
 
     args = parser.parse_args()
 
+    logging.basicConfig(
+        format='%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s',
+        handlers=[logging.StreamHandler(sys.stderr)]
+    )
+
+    if args.verbose == 1:
+        logging.getLogger().setLevel(logging.WARNING)
+    elif args.verbose == 2:
+        logging.getLogger().setLevel(logging.INFO)
+    elif args.verbose == 3:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+
     if args.command == 'backup':
+        logger.info('Starting backup process')
         print(backup_controller(args))
     if args.command == 'restore':
+        logger.info('Starting restore process... ')
         print(restore_controller(args))
 
 

@@ -1,7 +1,9 @@
 import os
-
+import logging
 from networkx import is_empty
 from src.models import dbmysql as mysql
+
+logger = logging.getLogger(__name__)
 
 
 class Restore:
@@ -21,6 +23,8 @@ class Restore:
         if self.backup_version is None:
             filenames = os.listdir(self.file)
             self.backup_version = max(filenames)
+        logger.info(f'Database server is {self.db_type}')
+
 
     def restore_sql(self, sql: str) -> str:
         if self.db_type == 'mysql':
@@ -32,14 +36,17 @@ class Restore:
         Delegates restoration tasks to another methods
         """
         version_folder = f'{self.file}/{self.backup_version}'
+        logger.debug(f'Backups folder is: {version_folder}')
         files = []
         if self.table_name:
+            logger.info('Table is set, searching folder for table backup.')
             for file in os.listdir(version_folder):
                 if self.table_name in file:
                     files.append(self.table_name)
         else:
+            logger.info('Table is not set, selecting all files in directory.')
             files = os.listdir(version_folder)
-
+        logger.debug(f'Found files in {version_folder}: {files}')
         sql_types = {
             "ddl": [],
             "dml": [],
@@ -50,6 +57,7 @@ class Restore:
             match self.restore_type:
                 case 'structure':
                     for file in files:
+                        logger.debug(f'Processing {file}')
                         if "DDL" in file:
                             sql_types["ddl"].append(file)
                         elif "DML" in file:
@@ -67,6 +75,7 @@ class Restore:
                                 self.restore_sql(sql=sql)
                 case 'data':
                     for file in files:
+                        logger.debug(f'Processing {file}')
                         if "DDL" in file:
                             continue
                         elif "DML" in file:
@@ -85,6 +94,7 @@ class Restore:
 
         else:
             for file in files:
+                logger.debug(f'Processing {file}')
                 if "DDL" in file:
                     sql_types["ddl"].append(file)
                 elif "DML" in file:
@@ -112,4 +122,3 @@ class Restore:
                     sql = f.read()
                 self.restore_sql(sql=sql)
 
-        return 'Successfully restored!'

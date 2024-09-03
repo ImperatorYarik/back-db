@@ -4,6 +4,8 @@ import logging
 
 from src.models import dbmysql as mysql
 
+logger = logging.getLogger(__name__)
+
 
 class Backup:
 
