@@ -188,15 +188,16 @@ USE {self.database_name};"""
         :param sql: sql code which needs to be executed
         :return: True if success
         """
-        # FIXME: Need to ignore foreign keyes
         cursor = self.connection.cursor()
+        sql = self.turn_off_checks_sql + self.turn_off_checks_tables_sql + f'USE {self.database_name};' + sql + self.turn_on_checks_sql
         try:
             structure = sql.split(';')
             for element in structure:
                 cursor.execute(element)
 
         except Exception as e:
-            logger.warning(f'WARNING: {e}')
+            if 'Query was empty' not in str(e):
+                logger.debug(f'WARNING: {e}')
             return True
         return True
 

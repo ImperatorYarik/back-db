@@ -35,9 +35,6 @@ class Restore:
         """
         version_folder = f'{self.file}/{self.backup_version}'
         files = os.listdir(version_folder)
-
-
-        sql = ''
         if self.restore_type:
             pass
         else:
@@ -57,10 +54,11 @@ class Restore:
                     with open(version_folder + '/' + file, 'r') as f:
                         sql = f.read()
                     self.restore_sql(sql=sql)
-            for sql_file in sql_types["ddl"]:
-                with open(version_folder + '/' + sql_file, 'r') as f:
-                    sql = f.read()
-                self.restore_sql(sql=sql)
+            for _ in range(2):
+                for sql_file in sql_types["ddl"]:
+                    with open(version_folder + '/' + sql_file, 'r') as f:
+                        sql = f.read()
+                    self.restore_sql(sql=sql)
             for sql_file in sql_types["dml"]:
                 with open(version_folder + '/' + sql_file, 'r') as f:
                     sql = f.read()
