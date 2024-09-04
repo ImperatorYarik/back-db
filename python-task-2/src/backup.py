@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 import logging
 
-from src.models import dbmysql as mysql
+from src.models import mysql_database as mysql
 
 logger = logging.getLogger(__name__)
 
