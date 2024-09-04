@@ -28,7 +28,7 @@ class Restore:
 
     def restore_sql(self, sql: str) -> str:
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
+            db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name)
             return db.restore_database_sql(sql=sql)
 
     def restore_database(self):

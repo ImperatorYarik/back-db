@@ -10,7 +10,7 @@ mysql_version = 80003
 logger = logging.getLogger(__name__)
 
 
-class MySQL(database):
+class mysql(database):
     def __init__(self, database_name: str, connection_string: str, table_name: str = None) -> None:
         self.database_name = database_name
         self.connection_string = connection_string

@@ -24,7 +24,7 @@ def parse_connection_string(connection_string: str) -> dict:
     return match.groupdict()
 
 
-class Postgresql(database):
+class postgresql(database):
     def __init__(self, database_name: str, connection_string: str, table_name: str = None) -> None:
         self.database_name = database_name
         self.connection_string = connection_string

@@ -90,7 +90,7 @@ class Backup:
         :return: sql code
         """
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
+            db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_structure()
 
     def backup_data(self) -> str:
@@ -99,7 +99,7 @@ class Backup:
         :return: sql code
         """
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name)
+            db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_data()
 
     def backup_table(self) -> str:
@@ -108,7 +108,7 @@ class Backup:
         :return: sql code
         """
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
+            db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table()
     def backup_table_data(self) -> str:
@@ -117,7 +117,7 @@ class Backup:
         :return: sql code
         """
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
+            db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table_data()
 
@@ -127,7 +127,7 @@ class Backup:
         :return: dictionary of dictionaries {type}{table}[sql code]
         """
         if self.db_type == 'mysql':
-            db = mysql.MySQL(connection_string=self.connection_string, database_name=self.database_name,
+            db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             tables = db.get_all_tables()
             result = {
