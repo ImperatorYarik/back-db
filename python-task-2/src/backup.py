@@ -6,7 +6,6 @@ from src.models import mysql_database as mysql
 
 from src.models import postgresql_database as postgresql
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -108,6 +107,10 @@ class Backup:
             db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_data()
 
+        elif self.db_type == 'postgresql':
+            db = postgresql.postgresql(connection_string=self.connection_string, database_name=self.database_name)
+            return db.get_database_data()
+
     def backup_table(self) -> str:
         """
         Connects to database and returns table creation sql
@@ -117,6 +120,11 @@ class Backup:
             db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
             return db.get_table()
+
+        elif self.db_type == 'postgresql':
+            db = postgresql.postgresql(connection_string=self.connection_string, database_name=self.database_name)
+            return db.get_table()
+
     def backup_table_data(self) -> str:
         """
         Connects to database and returns table insert data
@@ -127,23 +135,35 @@ class Backup:
                              table_name=self.table_name)
             return db.get_table_data()
 
+        elif self.db_type == 'postgresql':
+            db = postgresql.postgresql(connection_string=self.connection_string, database_name=self.database_name)
+            return db.get_table_data()
+
     def backup_separate(self) -> dict:
         """
         Connects to database and returns all sql data in comfortable format with separate sql code types (DDL, DML, DCL)
         :return: dictionary of dictionaries {type}{table}[sql code]
         """
+        db = None
+
         if self.db_type == 'mysql':
             db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name,
                              table_name=self.table_name)
-            tables = db.get_all_tables()
-            result = {
-                "ddl": {},
-                "dml": {},
-                "dcl": {}
-            }
 
-            for table in tables:
-                result["ddl"][table] = db.get_table(custom_table=table)
-                result["dml"][table] = db.get_table_data(custom_table=table)
-            result["dcl"][self.database_name] = db.get_grants()
-            return result
+        elif self.db_type == 'postgresql':
+            db = postgresql.postgresql(connection_string=self.connection_string, database_name=self.database_name,
+                                       table_name=self.table_name)
+
+        tables = db.get_all_tables()
+        result = {
+            "ddl": {},
+            "dml": {},
+            "dcl": {}
+        }
+
+        for table in tables:
+            result["ddl"][table] = db.get_table(custom_table=table)
+            result["dml"][table] = db.get_table_data(custom_table=table)
+        result["dcl"][self.database_name] = db.get_grants()
+
+        return result

@@ -74,14 +74,21 @@ SET default_with_oids = false;\n\n"""
 
         create_database_script += '\n\n'
         for table in tables:
-            print(table)
             create_database_script += self.get_table(custom_table=table) + '\n\n'
+
         return create_database_script
 
 
     def get_database_data(self) -> str:
         """Get database data"""
-        pass
+        cursor = self.connection.cursor()
+        tables = self.get_all_tables()
+        result = ''
+
+        for table in tables:
+            result += self.get_table_data(custom_table=table) + '\n\n'
+
+        return result
 
     def get_table(self, custom_table: str) -> str:
         """Get table structure with data"""
@@ -148,7 +155,31 @@ SET default_with_oids = false;\n\n"""
 
     def get_table_data(self, custom_table: str) -> str:
         """Get table structure with data"""
-        pass
+        cursor = self.connection.cursor()
+
+        if custom_table is not None:
+            table = custom_table
+        else:
+            table = self.table_name
+
+        cursor.execute(f"SELECT * FROM {table}")
+        rows = cursor.fetchall()
+
+        table_insert_statements = []
+        for row in rows:
+            values = []
+            for value in row:
+                if isinstance(value, str):
+                    value = value.replace("'", "''")
+                    values.append(f"'{value}'")
+                elif value is None:
+                    values.append("NULL")
+                else:
+                    values.append(str(value))
+
+            table_insert_statements.append(f"INSERT INTO {table} VALUES ({', '.join(values)});")
+
+        return '\n'.join(table_insert_statements)
 
     def get_grants(self) -> str:
         """Get grants"""

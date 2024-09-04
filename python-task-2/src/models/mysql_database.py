@@ -10,12 +10,27 @@ mysql_version = 80003
 logger = logging.getLogger(__name__)
 
 
+def parse_connection_string(connection_string: str) -> dict:
+    """
+    Parses mysql connection string in pymysql acceptable format
+    :param connection_string: connection string to parse
+    :return: dictionary of connection data (user, pass, host, port, database)
+    """
+    import re
+    pattern = r'mysql://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^:]+):(?P<port>\d+)/'
+    logger.debug('Parsing connection string...')
+    match = re.match(pattern, connection_string)
+    if not match:
+        raise ValueError("Invalid connection string format")
+    return match.groupdict()
+
+
 class mysql(database):
     def __init__(self, database_name: str, connection_string: str, table_name: str = None) -> None:
         self.database_name = database_name
         self.connection_string = connection_string
         self.table_name = table_name
-        connection_params = self.parse_connection_string(connection_string)
+        connection_params = parse_connection_string(connection_string)
         try:
             self.connection = pymysql.connect(
                 user=connection_params['user'],
@@ -209,17 +224,3 @@ USE {self.database_name};"""
                 logger.warning(e)
             return True
         return True
-
-    def parse_connection_string(self, connection_string: str) -> dict:
-        """
-        Parses mysql connection string in pymysql acceptable format
-        :param connection_string: connection string to parse
-        :return: dictionary of connection data (user, pass, host, port, database)
-        """
-        import re
-        pattern = r'mysql://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^:]+):(?P<port>\d+)/'
-        logger.debug('Parsing connection string...')
-        match = re.match(pattern, connection_string)
-        if not match:
-            raise ValueError("Invalid connection string format")
-        return match.groupdict()
