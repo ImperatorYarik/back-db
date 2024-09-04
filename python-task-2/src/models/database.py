@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class Database(ABC):
+class database(ABC):
 
     @abstractmethod
     def __init__(self, database_name: str, connection_string: str) -> None:

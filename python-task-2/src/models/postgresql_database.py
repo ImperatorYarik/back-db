@@ -4,7 +4,7 @@ import logging
 
 import psycopg2
 
-from src.models.database import Database
+from src.models.database import database
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def parse_connection_string(connection_string: str) -> dict:
     return match.groupdict()
 
 
-class Postgresql(Database):
+class Postgresql(database):
     def __init__(self, database_name: str, connection_string: str, table_name: str = None) -> None:
         self.database_name = database_name
         self.connection_string = connection_string
@@ -41,4 +41,32 @@ class Postgresql(Database):
             )
         except Exception as e:
             logger.warning(e)
+
+    def get_all_tables(self) -> list:
+        """Get all tables in the database."""
+        pass
+
+    def get_database_structure(self) -> str:
+        """Get database structure"""
+        pass
+
+    def get_database_data(self) -> str:
+        """Get database data"""
+        pass
+
+    def get_table(self, custom_table: str) -> str:
+        """Get table structure with data"""
+        pass
+
+    def get_table_data(self, custom_table: str) -> str:
+        """Get table structure with data"""
+        pass
+
+    def get_grants(self) -> str:
+        """Get grants"""
+        pass
+
+    def restore_database_sql(self, database_data) -> bool:
+        """Restore database structure"""
+        pass
 
