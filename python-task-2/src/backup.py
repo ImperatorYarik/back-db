@@ -162,6 +162,7 @@ class Backup:
         }
 
         for table in tables:
+            print(table)
             result["ddl"][table] = db.get_table(custom_table=table)
             result["dml"][table] = db.get_table_data(custom_table=table)
         result["dcl"][self.database_name] = db.get_grants()

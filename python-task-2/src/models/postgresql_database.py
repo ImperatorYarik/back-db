@@ -90,7 +90,7 @@ SET default_with_oids = false;\n\n"""
 
         return result
 
-    def get_table(self, custom_table: str) -> str:
+    def get_table(self, custom_table: str = None) -> str:
         """Get table structure with data"""
         cursor = self.connection.cursor()
         if custom_table is not None:
@@ -153,7 +153,7 @@ SET default_with_oids = false;\n\n"""
 
         return create_table_script
 
-    def get_table_data(self, custom_table: str) -> str:
+    def get_table_data(self, custom_table: str = None) -> str:
         """Get table structure with data"""
         cursor = self.connection.cursor()
 
@@ -164,7 +164,7 @@ SET default_with_oids = false;\n\n"""
 
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
-
+        # TODO: be sure to check about categories picture bytea type field
         table_insert_statements = []
         for row in rows:
             values = []
@@ -183,7 +183,7 @@ SET default_with_oids = false;\n\n"""
 
     def get_grants(self) -> str:
         """Get grants"""
-        pass
+        return '1'
 
     def restore_database_sql(self, database_data) -> bool:
         """Restore database structure"""
