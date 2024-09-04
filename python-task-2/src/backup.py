@@ -4,6 +4,9 @@ import logging
 
 from src.models import mysql_database as mysql
 
+from src.models import postgresql_database as postgresql
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,7 +15,6 @@ class Backup:
     def __init__(self, db_type: str, database_name: str, connection_string: str, table_name: str = None,
                  op_type: str = None,
                  is_save_multiple: bool = False, save_into: str = None) -> None:
-        logger = logging.getLogger(__name__)
         self.db_type = db_type
         self.database_name = database_name
         self.connection_string = connection_string
@@ -26,7 +28,7 @@ class Backup:
             else:
                 logger.error('Provided path is not dir or does\'t exist!')
         else:
-            self.save_into = f'backup/{database_name}-mysql'
+            self.save_into = f'backup/{database_name}-{db_type}'
             os.makedirs(self.save_into, exist_ok=True)
 
     def backup_database(self) -> str:
@@ -91,6 +93,10 @@ class Backup:
         """
         if self.db_type == 'mysql':
             db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name)
+            return db.get_database_structure()
+
+        elif self.db_type == 'postgresql':
+            db = postgresql.postgresql(connection_string=self.connection_string, database_name=self.database_name)
             return db.get_database_structure()
 
     def backup_data(self) -> str:
