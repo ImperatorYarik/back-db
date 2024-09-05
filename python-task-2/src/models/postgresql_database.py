@@ -53,7 +53,6 @@ class postgresql(database):
                 """)
         return [row[0] for row in cursor.fetchall()]
 
-
     def get_database_structure(self) -> str:
         """Get database structure"""
         create_database_script = """SET statement_timeout = 0;
@@ -77,7 +76,6 @@ SET default_with_oids = false;\n\n"""
             create_database_script += self.get_table(custom_table=table) + '\n\n'
 
         return create_database_script
-
 
     def get_database_data(self) -> str:
         """Get database data"""
@@ -164,7 +162,6 @@ SET default_with_oids = false;\n\n"""
 
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
-        # TODO: be sure to check about categories picture bytea type field
         table_insert_statements = []
         for row in rows:
             values = []
@@ -174,6 +171,8 @@ SET default_with_oids = false;\n\n"""
                     values.append(f"'{value}'")
                 elif value is None:
                     values.append("NULL")
+                elif isinstance(value, memoryview):
+                    values.append(f"'\\x{value.tobytes().hex()}'")
                 else:
                     values.append(str(value))
 
@@ -181,11 +180,48 @@ SET default_with_oids = false;\n\n"""
 
         return '\n'.join(table_insert_statements)
 
+
     def get_grants(self) -> str:
         """Get grants"""
-        return '1'
+        cursor = self.connection.cursor()
+
+        cursor.execute("""
+                    SELECT
+                        pg_roles.rolname AS grantee,
+                        pg_database.datname AS database,
+                        has_database_privilege(pg_roles.rolname, pg_database.datname, 'CONNECT') AS can_connect,
+                        has_database_privilege(pg_roles.rolname, pg_database.datname, 'CREATE') AS can_create,
+                        has_database_privilege(pg_roles.rolname, pg_database.datname, 'TEMP') AS can_temp
+                    FROM pg_roles, pg_database
+                    WHERE pg_roles.rolcanlogin = TRUE;
+                """)
+
+        database_privileges = cursor.fetchall()
+        grant_statements = ''
+
+        for row in database_privileges:
+            grantee, database, can_connect, can_create, can_temp = row
+            if can_connect:
+                grant_statements += f"GRANT CONNECT ON DATABASE {database} TO {grantee};\n"
+            if can_create:
+                grant_statements += f"GRANT CREATE ON DATABASE {database} TO {grantee};\n"
+            if can_temp:
+                grant_statements += f"GRANT TEMP ON DATABASE {database} TO {grantee};\n"
+
+        cursor.execute("""
+                    SELECT grantee, privilege_type, table_name
+                    FROM information_schema.table_privileges
+                    WHERE table_schema = 'public';  -- Change schema as needed
+                """)
+
+        table_privileges = cursor.fetchall()
+        for row in table_privileges:
+            grantee, privilege_type, table_name = row
+            grant_statements += f"GRANT {privilege_type} ON TABLE {table_name} TO {grantee};\n"
+
+        return grant_statements
+
 
     def restore_database_sql(self, database_data) -> bool:
         """Restore database structure"""
         pass
-
