@@ -222,6 +222,20 @@ SET default_with_oids = false;\n\n"""
         return grant_statements
 
 
-    def restore_database_sql(self, database_data) -> bool:
+    def restore_database_sql(self, sql: str) -> bool:
         """Restore database structure"""
-        pass
+        cursor = self.connection.cursor()
+        try:
+            logger.debug('Executing sql script...')
+            structure = filter(None, sql.split(';'))
+
+            for element in structure:
+                cursor.execute(element)
+
+            self.connection.commit()
+
+        except Exception as e:
+            if 'Query was empty' not in str(e):
+                logger.warning(e)
+            return True
+        return True

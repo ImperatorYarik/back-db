@@ -49,6 +49,24 @@ services:
     networks:
       - python-task-2-network
 
+  postgres2:
+    image: postgres:latest
+    container_name: ${PROJECT_NAME}-postgres2
+    restart: unless-stopped
+    user: postgres
+    volumes:
+      - postgres2-python-task-2:/var/lib/postgresql/data
+      - ./test-dumps/northwind-db(postgres):/home
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+    networks:
+      - python-task-2-network
+
+
 networks:
   python-task-2-network:
 
@@ -56,3 +74,4 @@ volumes:
   mysql-python-task-2:
   mysql-python-task-2-2:
   postgres-python-task-2:
+  postgres2-python-task-2:

@@ -2,7 +2,7 @@ import os
 import logging
 from networkx import is_empty
 from src.models import mysql_database as mysql
-
+from src.models import postgresql_database as postgresql
 logger = logging.getLogger(__name__)
 
 
@@ -27,9 +27,12 @@ class Restore:
 
 
     def restore_sql(self, sql: str) -> str:
+        db = None
         if self.db_type == 'mysql':
             db = mysql.mysql(connection_string=self.connection_string, database_name=self.database_name)
-            return db.restore_database_sql(sql=sql)
+        elif self.db_type == 'postgresql':
+            db = postgresql.postgresql(connection_string=self.connection_string, database_name=self.database_name)
+        return db.restore_database_sql(sql=sql)
 
     def restore_database(self):
         """
