@@ -215,12 +215,11 @@ USE {self.database_name};"""
         sql = self.turn_off_checks_sql + self.turn_off_checks_tables_sql + f'USE {self.database_name};' + sql + self.turn_on_checks_sql
         try:
             logger.debug('Executing sql script...')
-            structure = sql.split(';')
+            structure = filter(None, sql.split(';'))
             for element in structure:
                 cursor.execute(element)
 
         except Exception as e:
-            if 'Query was empty' not in str(e):
                 logger.warning(e)
-            return True
+
         return True

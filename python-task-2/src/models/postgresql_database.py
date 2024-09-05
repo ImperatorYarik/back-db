@@ -1,5 +1,3 @@
-import binascii
-import datetime
 import logging
 
 import psycopg2
@@ -42,7 +40,10 @@ class postgresql(database):
             logger.warning(e)
 
     def get_all_tables(self) -> list:
-        """Get all tables in the database."""
+        """
+        Returns a list of all tables in the database
+        :return:
+        """
 
         cursor = self.connection.cursor()
         cursor.execute("""
@@ -54,7 +55,11 @@ class postgresql(database):
         return [row[0] for row in cursor.fetchall()]
 
     def get_database_structure(self) -> str:
-        """Get database structure"""
+        """
+        Creates a string sql code for mysql database schema creation with all tables
+        :return: sql code represented as string
+        """
+
         create_database_script = """SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -78,8 +83,11 @@ SET default_with_oids = false;\n\n"""
         return create_database_script
 
     def get_database_data(self) -> str:
-        """Get database data"""
-        cursor = self.connection.cursor()
+        """
+        Creates a string sql code for mysql database data insertion for all tables
+        :return: sql code represented as string
+        """
+
         tables = self.get_all_tables()
         result = ''
 
@@ -89,7 +97,12 @@ SET default_with_oids = false;\n\n"""
         return result
 
     def get_table(self, custom_table: str = None) -> str:
-        """Get table structure with data"""
+        """
+        Creates a string sql code for mysql one table creation
+        :param custom_table: if class param is not set
+        :return: a sql code represented as string
+        """
+
         cursor = self.connection.cursor()
         if custom_table is not None:
             table = custom_table
@@ -152,7 +165,12 @@ SET default_with_oids = false;\n\n"""
         return create_table_script
 
     def get_table_data(self, custom_table: str = None) -> str:
-        """Get table structure with data"""
+        """
+        Creates a string sql code for mysql one table data insertion
+        :param custom_table: if class param is not set
+        :return: a sql code represented as string
+        """
+
         cursor = self.connection.cursor()
 
         if custom_table is not None:
@@ -180,9 +198,12 @@ SET default_with_oids = false;\n\n"""
 
         return '\n'.join(table_insert_statements)
 
-
     def get_grants(self) -> str:
-        """Get grants"""
+        """
+        Creates a string sql code for mysql grants creation
+        :return: a sql code represented as string
+        """
+
         cursor = self.connection.cursor()
 
         cursor.execute("""
@@ -221,21 +242,23 @@ SET default_with_oids = false;\n\n"""
 
         return grant_statements
 
-
     def restore_database_sql(self, sql: str) -> bool:
-        """Restore database structure"""
+        """
+        Executes sql script
+        :param sql: sql code which needs to be executed
+        :return: True if success
+        """
+
         cursor = self.connection.cursor()
         try:
             logger.debug('Executing sql script...')
             structure = filter(None, sql.split(';'))
-
             for element in structure:
                 cursor.execute(element)
 
             self.connection.commit()
 
         except Exception as e:
-            if 'Query was empty' not in str(e):
-                logger.warning(e)
-            return True
+            logger.warning(e)
+
         return True
