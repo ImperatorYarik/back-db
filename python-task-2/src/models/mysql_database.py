@@ -109,7 +109,7 @@ USE {self.database_name};"""
         """
         cursor = self.connection.cursor()
         result = self.turn_off_checks_tables_sql
-        result += f'USE {self.database_name};\n\n'
+        result += f'USE {self.database_name};\n'
         logger.info('Getting database data...')
         try:
             cursor.execute(f"SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
@@ -143,7 +143,7 @@ USE {self.database_name};"""
         cursor = self.connection.cursor()
         cursor.execute(f'SHOW CREATE TABLE `{table}`')
         create_table = cursor.fetchall()
-        structure += create_table[0][1] + ';\n\n'
+        structure += create_table[0][1] + ';\n'
         if self.table_name:
             structure += self.turn_off_checks_sql
 
@@ -160,7 +160,7 @@ USE {self.database_name};"""
             table = custom_table
             result = ''
         else:
-            result = f'USE {self.database_name};\n\n'
+            result = f'USE {self.database_name};\n'
             table = self.table_name
 
         logger.info(f'Getting data from table: {table}')
@@ -187,7 +187,7 @@ USE {self.database_name};"""
             result += f'({formatted_data}),\n'
 
         if result.endswith(',\n'):
-            result = result[:-2] + ';\nCOMMIT;\n\n'
+            result = result[:-2] + ';\nCOMMIT;\n'
         return result
 
     def get_grants(self) -> str:

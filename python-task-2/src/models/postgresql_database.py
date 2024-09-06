@@ -288,6 +288,7 @@ SET default_with_oids = false;\n\n"""
                 cursor.execute(element)
             except Exception as e:
                 logger.warning(e)
+
         self.connection.commit()
 
         return True
