@@ -9,7 +9,7 @@ from src.models.database import database
 mysql_version = 80003
 logger = logging.getLogger(__name__)
 
-
+repeat = 2
 def parse_connection_string(connection_string: str) -> dict:
     """
     Parses mysql connection string in pymysql acceptable format
@@ -222,10 +222,11 @@ USE {self.database_name};"""
 
         logger.debug('Executing sql script...')
         structure = list(filter(None, sql.split(';')))
-        for _ in range(2):
+        for _ in range(repeat):
             for element in structure:
                 try:
                     cursor.execute(f'{element};')
                 except Exception as e:
                     logger.debug(e)
+
         return True
