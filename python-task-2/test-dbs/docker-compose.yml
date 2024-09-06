@@ -20,8 +20,7 @@ services:
     image: mysql:8.0.20
     container_name: ${PROJECT_NAME}-mysql2
     restart: unless-stopped
-    volumes:
-      - mysql-python-task-2-2:/var/lib/mysql
+
     ports:
       - "3307:3306"
     environment:
@@ -54,9 +53,7 @@ services:
     container_name: ${PROJECT_NAME}-postgres2
     restart: unless-stopped
     user: postgres
-    volumes:
-      - postgres2-python-task-2:/var/lib/postgresql/data
-      - ./test-dumps/northwind-db(postgres):/home
+
     ports:
       - "5433:5432"
     environment:
@@ -66,12 +63,23 @@ services:
     networks:
       - python-task-2-network
 
+  pgadmin:
+      image: dpage/pgadmin4:latest
+      container_name: ${PROJECT_NAME}-pgadmin
+      environment:
+        PGADMIN_DEFAULT_EMAIL: admin@example.com
+        PGADMIN_DEFAULT_PASSWORD: admin
+      ports:
+        - "5050:80"
+      networks:
+        - python-task-2-network
+
+
 
 networks:
   python-task-2-network:
 
 volumes:
   mysql-python-task-2:
-  mysql-python-task-2-2:
+
   postgres-python-task-2:
-  postgres2-python-task-2:

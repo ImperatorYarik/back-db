@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 import psycopg2
 
@@ -23,10 +24,12 @@ def parse_connection_string(connection_string: str) -> dict:
 
 
 class postgresql(database):
-    def __init__(self, database_name: str, connection_string: str, table_name: str = None) -> None:
+    def __init__(self, database_name: str, connection_string: str, is_restore: bool = False,
+                 table_name: str = None) -> None:
         self.database_name = database_name
         self.connection_string = connection_string
         self.table_name = table_name
+        self.is_restore = is_restore
         connection_params = parse_connection_string(connection_string)
         try:
             self.connection = psycopg2.connect(
@@ -38,12 +41,35 @@ class postgresql(database):
             )
         except Exception as e:
             logger.warning(e)
+            if not self.is_restore:
+                logger.warning(f'Creating database {self.database_name}')
+                temp_connection = psycopg2.connect(
+                    user=connection_params['user'],
+                    password=connection_params['password'],
+                    host=connection_params['host'],
+                    port=int(connection_params['port']),
+                    dbname='postgres'
+                )
+                temp_connection.autocommit = True
+                temp_cursor = temp_connection.cursor()
+                temp_cursor.execute(f'CREATE DATABASE {self.database_name}')
+                temp_cursor.close()
+                temp_connection.close()
+
+                self.connection = psycopg2.connect(
+                    user=connection_params['user'],
+                    password=connection_params['password'],
+                    host=connection_params['host'],
+                    port=int(connection_params['port']),
+                    dbname=database_name,
+                )
 
     def get_all_tables(self) -> list:
         """
         Returns a list of all tables in the database
         :return:
         """
+        logger.debug(f'Getting all database tables.')
 
         cursor = self.connection.cursor()
         cursor.execute("""
@@ -87,6 +113,7 @@ SET default_with_oids = false;\n\n"""
         Creates a string sql code for mysql database data insertion for all tables
         :return: sql code represented as string
         """
+        logger.info('Getting database data...')
 
         tables = self.get_all_tables()
         result = ''
@@ -108,6 +135,7 @@ SET default_with_oids = false;\n\n"""
             table = custom_table
         else:
             table = self.table_name
+        logger.info(f'Getting structure of {table}')
 
         cursor.execute(f"""
                     SELECT 
@@ -170,7 +198,7 @@ SET default_with_oids = false;\n\n"""
         :param custom_table: if class param is not set
         :return: a sql code represented as string
         """
-
+        import re
         cursor = self.connection.cursor()
 
         if custom_table is not None:
@@ -181,6 +209,7 @@ SET default_with_oids = false;\n\n"""
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
         table_insert_statements = []
+        date_pattern = re.compile(r'^\d{4}-\d{2}-\d{2}$')
         for row in rows:
             values = []
             for value in row:
@@ -189,6 +218,8 @@ SET default_with_oids = false;\n\n"""
                     values.append(f"'{value}'")
                 elif value is None:
                     values.append("NULL")
+                elif date_pattern.match(str(value)):
+                    values.append(f"\'{value}\'")
                 elif isinstance(value, memoryview):
                     values.append(f"'\\x{value.tobytes().hex()}'")
                 else:
@@ -250,15 +281,13 @@ SET default_with_oids = false;\n\n"""
         """
 
         cursor = self.connection.cursor()
-        try:
-            logger.debug('Executing sql script...')
-            structure = filter(None, sql.split(';'))
-            for element in structure:
+        logger.debug('Executing sql script...')
+        structure = filter(None, sql.split(';'))
+        for element in structure:
+            try:
                 cursor.execute(element)
-
-            self.connection.commit()
-
-        except Exception as e:
-            logger.warning(e)
+            except Exception as e:
+                logger.warning(e)
+        self.connection.commit()
 
         return True

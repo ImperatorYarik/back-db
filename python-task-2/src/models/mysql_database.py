@@ -26,10 +26,12 @@ def parse_connection_string(connection_string: str) -> dict:
 
 
 class mysql(database):
-    def __init__(self, database_name: str, connection_string: str, table_name: str = None) -> None:
+    def __init__(self, database_name: str, connection_string: str, is_restore: bool = False,
+                 table_name: str = None) -> None:
         self.database_name = database_name
         self.connection_string = connection_string
         self.table_name = table_name
+        self.is_restore = is_restore
         connection_params = parse_connection_string(connection_string)
         try:
             self.connection = pymysql.connect(
@@ -42,15 +44,18 @@ class mysql(database):
             )
         except Exception as e:
             logger.warning(e)
-            self.connection = pymysql.connect(
-                user=connection_params['user'],
-                password=connection_params['password'],
-                host=connection_params['host'],
-                port=int(connection_params['port']),
-                charset='utf8mb4'
-            )
-            cursor = self.connection.cursor()
-            cursor.execute(f'CREATE SCHEMA {self.database_name}')
+            if not self.is_restore:
+                logger.warning(f'Creating database {self.database_name}')
+                self.connection = pymysql.connect(
+                    user=connection_params['user'],
+                    password=connection_params['password'],
+                    host=connection_params['host'],
+                    port=int(connection_params['port']),
+                    charset='utf8mb4'
+                )
+                cursor = self.connection.cursor()
+                cursor.execute(f'CREATE SCHEMA {self.database_name}')
+
         self.turn_off_checks_sql = f"""SET NAMES utf8mb4;
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -76,6 +81,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
         cursor = self.connection.cursor()
         sql_query = f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{self.database_name}'"
         cursor.execute(sql_query)
+        logger.debug(f'Getting all database tables.')
         return [row[0] for row in cursor.fetchall()]
 
     def get_database_structure(self) -> str:
@@ -104,7 +110,7 @@ USE {self.database_name};"""
         cursor = self.connection.cursor()
         result = self.turn_off_checks_tables_sql
         result += f'USE {self.database_name};\n\n'
-
+        logger.info('Getting database data...')
         try:
             cursor.execute(f"SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
             tables = [row[0] for row in cursor.fetchall()]
@@ -213,13 +219,13 @@ USE {self.database_name};"""
         """
         cursor = self.connection.cursor()
         sql = self.turn_off_checks_sql + self.turn_off_checks_tables_sql + f'USE {self.database_name};' + sql + self.turn_on_checks_sql
-        try:
-            logger.debug('Executing sql script...')
-            structure = filter(None, sql.split(';'))
+
+        logger.debug('Executing sql script...')
+        structure = list(filter(None, sql.split(';')))
+        for _ in range(2):
             for element in structure:
-                cursor.execute(element)
-
-        except Exception as e:
-                logger.warning(e)
-
+                try:
+                    cursor.execute(f'{element};')
+                except Exception as e:
+                    logger.debug(e)
         return True
