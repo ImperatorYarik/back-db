@@ -42,23 +42,26 @@ class Backup:
 
         match self.op_type:
             case 'structure':
-
                 if self.table_name:
                     with open(f'{save_into}/{self.table_name}.DDL.sql', 'w') as f:
                         f.write(self.backup_table())
-                    return 'Success'
+                    return f'Successfully backed up {self.table_name}\'s {self.op_type} from {self.database_name}!'
+
                 with open(f'{save_into}/{self.database_name}-structure.sql', 'w') as f:
                     f.write(self.backup_structure())
-                return 'Success'
-            case 'data':
 
+                return f'Successfully backed up {self.database_name}\'s {self.op_type}!'
+
+            case 'data':
                 if self.table_name:
                     with open(f'{save_into}/{self.table_name}.DML.sql', 'w') as f:
                         f.write(self.backup_table_data())
-                    return 'Success'
+                    return f'Successfully backed up {self.table_name}\'s {self.op_type} from {self.database_name}!'
+
                 with open(f'{save_into}/{self.database_name}-data.sql', 'w') as f:
                     f.write(self.backup_data())
-                return 'Success'
+
+                return f'Successfully backed up {self.database_name}\'s {self.op_type}!'
 
             case _:
                 if self.is_save_multiple:
@@ -72,18 +75,21 @@ class Backup:
                     for db, structure in sql_dict["dml"].items():
                         with open(f'{save_into}/{db}.DML.sql', 'w') as f:
                             f.write(structure)
-                    return 'Success'
+                    return f'Successfully backed up {self.database_name}!'
 
                 else:
                     if self.table_name:
                         result = f'{self.backup_table()}\n\n\n-- DATA --\n' + f'{self.backup_table_data()}'
                         with open(f'{save_into}/{self.table_name}.sql', 'w') as f:
                             f.write(result)
-                        return 'Success'
+
+                        return f'Successfully backed up {self.table_name} from {self.database_name}!'
+
                     result = f'{self.backup_structure()}\n\n\n-- DATA --\n' + f'{self.backup_data()}'
                     with open(f'{save_into}/{self.database_name}.sql', 'w') as f:
                         f.write(result)
-                    return 'Success'
+
+                    return f'Successfully backed up {self.database_name}!'
 
     def backup_structure(self) -> str:
         """

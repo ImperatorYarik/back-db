@@ -1,12 +1,16 @@
 import sys
 import logging
 import argparse
-from venv import logger
 
 import src.backup as backup
 import src.restore as restore
 
+BACKUP_ERROR = 101
+RESTORATION_ERROR = 102
+
 logger = logging.getLogger(__name__)
+
+
 def backup_controller(args):
     logger.debug(f'Parsed arguments: {args}')
     bk = backup.Backup(db_type=args.db_type, database_name=args.db, connection_string=args.connection_string,
@@ -105,6 +109,7 @@ def main():
         help='Table to restore.',
         action='store'
     )
+
     parser.add_argument(
         '-v', '--verbose',
         action='count',
@@ -128,10 +133,20 @@ def main():
 
     if args.command == 'backup':
         logger.info('Starting backup process')
-        print(backup_controller(args))
-    if args.command == 'restore':
+        try:
+            print(backup_controller(args))
+        except Exception as e:
+            logger.error(e)
+            sys.exit(BACKUP_ERROR)
+
+    elif args.command == 'restore':
         logger.info('Starting restore process... ')
-        print(restore_controller(args))
+        try:
+            print(restore_controller(args))
+        except Exception as e:
+            logger.error(e)
+            sys.exit(RESTORATION_ERROR)
+
 
 
 if __name__ == '__main__':
