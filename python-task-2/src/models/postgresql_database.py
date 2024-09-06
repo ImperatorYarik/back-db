@@ -208,26 +208,34 @@ SET default_with_oids = false;\n\n"""
 
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
-        table_insert_statements = []
         date_pattern = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+        insert_statement = f'INSERT INTO {table} VALUES '
+        result = ''
         for row in rows:
-            values = []
+            values = ''
             for value in row:
                 if isinstance(value, str):
                     value = value.replace("'", "''")
-                    values.append(f"'{value}'")
+                    values += f"'{value}'"
                 elif value is None:
-                    values.append("NULL")
+                    values += "NULL"
                 elif date_pattern.match(str(value)):
-                    values.append(f"\'{value}\'")
+                    values += f"\'{value}\'"
                 elif isinstance(value, memoryview):
-                    values.append(f"'\\x{value.tobytes().hex()}'")
+                    values += f"'\\x{value.tobytes().hex()}'"
                 else:
-                    values.append(str(value))
+                    values += str(value)
 
-            table_insert_statements.append(f"INSERT INTO {table} VALUES ({', '.join(values)});")
+                values += ','
+            result += f'({values[:-1]}),\n'
+        if result.endswith(',\n'):
+            result = result[:-2] + ';\n'
 
-        return '\n'.join(table_insert_statements)
+        if result == '':
+            return ''
+        result = insert_statement + result
+
+        return result
 
     def get_grants(self) -> str:
         """
