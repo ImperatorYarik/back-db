@@ -208,8 +208,10 @@ SET default_with_oids = false;\n\n"""
 
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
+
         date_pattern = re.compile(r'^\d{4}-\d{2}-\d{2}$')
-        insert_statement = f'INSERT INTO {table} VALUES '
+        # TODO: add column names
+        insert_statement = f'INSERT INTO {table} ({', '.join([desc[0] for desc in cursor.description])}) VALUES '
         result = ''
         for row in rows:
             values = ''
