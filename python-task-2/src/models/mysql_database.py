@@ -165,9 +165,11 @@ USE {self.database_name};"""
 
         logger.info(f'Getting data from table: {table}')
 
-        result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` VALUES "
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
+
+        result += f"SET AUTOCOMMIT=0;\nINSERT INTO `{table}` ({', '.join([desc[0] for desc in cursor.description])}) VALUES "
+
         for row in rows:
             formatted_data = ''
             for value in row:
