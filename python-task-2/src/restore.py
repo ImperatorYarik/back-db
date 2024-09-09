@@ -1,8 +1,9 @@
 import os
 import logging
-from networkx import is_empty
+
 from src.models import mysql_database as mysql
 from src.models import postgresql_database as postgresql
+
 logger = logging.getLogger(__name__)
 
 

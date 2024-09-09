@@ -3,7 +3,6 @@ from datetime import datetime
 import logging
 
 from src.models import mysql_database as mysql
-
 from src.models import postgresql_database as postgresql
 
 logger = logging.getLogger(__name__)
