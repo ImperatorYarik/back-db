@@ -13,6 +13,6 @@
 
 #python3 main.py backup --db northwind --db-type postgresql --connection-string postgresql://dumper:dumper@localhost:5432/ --save-multi
 
-python3 main.py restore --db northwind --db-type postgresql --connection-string postgresql://dumper:dumper@localhost:5433/
+#python3 main.py restore --db northwind --db-type postgresql --connection-string postgresql://dumper:dumper@localhost:5433/
 
 
