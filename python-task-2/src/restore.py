@@ -72,11 +72,10 @@ class Restore:
                             with open(version_folder + '/' + file, 'r') as f:
                                 sql = f.read()
                             self.restore_sql(sql=sql)
-                        for _ in range(2):
-                            for sql_file in sql_types["ddl"]:
-                                with open(version_folder + '/' + sql_file, 'r') as f:
-                                    sql = f.read()
-                                self.restore_sql(sql=sql)
+                        for sql_file in sql_types["ddl"]:
+                            with open(version_folder + '/' + sql_file, 'r') as f:
+                                sql = f.read()
+                            self.restore_sql(sql=sql)
                     return f"Restored {self.database_name} database structure"
                 case 'data':
                     for file in files:
